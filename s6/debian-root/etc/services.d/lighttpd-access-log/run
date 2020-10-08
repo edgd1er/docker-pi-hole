@@ -1,0 +1,2 @@
+#!/usr/bin/execlineb -P
+cat <> /var/run/s6/lighttpd-access-log-fifo >&1
