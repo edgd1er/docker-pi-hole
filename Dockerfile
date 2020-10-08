@@ -19,6 +19,14 @@ ENTRYPOINT [ "/s6-init" ]
 ADD s6/debian-root /
 COPY s6/service /usr/local/bin/service
 
+#
+# create fifos
+# create services to read fifos et write to files
+# redirect lighttpd accesslog and errorlog to fifos lighthttpd cannot use /dev/stdout https://redmine.lighttpd.net/issues/2731
+RUN echo "sed -i 's#server.errorlog.*#server.errorlog=\"/var/run/s6/lighttpd-error-log-fifo\"#g' /etc/lighttpd/lighttpd.conf" >>/start.sh && \
+    echo "sed -i 's#accesslog.filename.*#accesslog.filename=\"/var/run/s6/lighttpd-access-log-fifo\"#g' /etc/lighttpd/lighttpd.conf" >>/start.sh && \
+    echo "grep -E \"(accesslog.filename|server.errorlog)\" /etc/lighttpd/lighttpd.conf" >>/start.sh
+
 # php config start passes special ENVs into
 ARG PHP_ENV_CONFIG
 ENV PHP_ENV_CONFIG "${PHP_ENV_CONFIG}"
