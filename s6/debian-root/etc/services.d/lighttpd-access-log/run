@@ -1,0 +1,2 @@
+#!/usr/bin/execlineb -P
+cat /var/log/lighttpd/access.log 2>&1
