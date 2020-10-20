@@ -2,9 +2,11 @@ ARG PIHOLE_BASE
 #FROM --platform=$BUILDPLATFORM $PIHOLE_BASE
 FROM debian:buster-slim
 
-ARG TARGETPLATFORM
+ARG TARGETARCH
+ENV PIHOLE_ARCH="${TARGETARCH}"
+ENV S6_ARCH=${TARGETARCH}
 ARG S6_VERSION
-ENV S6OVERLAY_RELEASE "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${TARGETPLATFORM}.tar.gz"
+ENV S6OVERLAY_RELEASE "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${TARGETARCH}.tar.gz"
 
 RUN echo "running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 COPY install.sh /usr/local/bin/install.sh
@@ -18,14 +20,6 @@ ENTRYPOINT [ "/s6-init" ]
 
 ADD s6/debian-root /
 COPY s6/service /usr/local/bin/service
-
-#
-# create fifos
-# create services to read fifos et write to files
-# redirect lighttpd accesslog and errorlog to fifos lighthttpd cannot use /dev/stdout https://redmine.lighttpd.net/issues/2731
-RUN echo "sed -i 's#server.errorlog.*#server.errorlog=\"/var/run/s6/lighttpd-error-log-fifo\"#g' /etc/lighttpd/lighttpd.conf" >>/start.sh && \
-    echo "sed -i 's#accesslog.filename.*#accesslog.filename=\"/var/run/s6/lighttpd-access-log-fifo\"#g' /etc/lighttpd/lighttpd.conf" >>/start.sh && \
-    echo "grep -E \"(accesslog.filename|server.errorlog)\" /etc/lighttpd/lighttpd.conf" >>/start.sh
 
 # php config start passes special ENVs into
 ARG PHP_ENV_CONFIG
@@ -55,7 +49,7 @@ ENV VERSION "${PIHOLE_VERSION}"
 ENV PATH /opt/pihole:${PATH}
 
 ARG NAME
-LABEL image="${NAME}:${PIHOLE_VERSION}_${TARGETPLATFORM}"
+LABEL image="${NAME}:${PIHOLE_VERSION}_${TARGETARCH}"
 ARG MAINTAINER
 LABEL maintainer="${MAINTAINER}"
 LABEL url="https://www.github.com/pi-hole/docker-pi-hole"
