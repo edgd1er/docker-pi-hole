@@ -17,3 +17,5 @@ var-log/
 
 # WIP/test stuff
 doco.yml
+
+gen_image_buildx.sh
