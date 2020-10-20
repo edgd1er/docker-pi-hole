@@ -40,7 +40,12 @@ export adlistFile='/etc/pihole/adlists.list'
 # The below functions are all contained in bash_functions.sh
 . /bash_functions.sh
 
+set -x
 # Ensure we have all functions available to update our configurations
+sed -i.bak '228s/CONDITIONAL_FORWARDING/REV_SERVER/' /opt/pihole/webpage.sh
+sed -i.bak '229s/CONDITIONAL_FORWARDING_REVERSE/REV_SERVER_CIDR/' /opt/pihole/webpage.sh
+sed -i.bak '230s/CONDITIONAL_FORWARDING_DOMAIN/REV_SERVER_DOMAIN/' /opt/pihole/webpage.sh
+sed -i.bak '231s/CONDITIONAL_FORWARDING_IP/REV_SERVER_TARGET/' /opt/pihole/webpage.sh
 . /opt/pihole/webpage.sh
 
 # PH_TEST prevents the install from actually running (someone should rename that)
