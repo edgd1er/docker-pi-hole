@@ -48,8 +48,8 @@ jobs:
       - name: Login to Docker hub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_PASS }}
       - name: Build and push
         uses: docker/build-push-action@v2
         with:
@@ -62,12 +62,12 @@ jobs:
           platforms: linux/amd64,linux/arm/v6,linux/arm/v7
           push: true
           build-args: |
-            NAME=${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}
+            NAME=${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}
             PIHOLE_BASE=${{ env.PIHOLE_BASE }}
             PHP_ENV_CONFIG=${{ env.PHP_ENV_CONFIG }}
             S6_VERSION=${{ env.S6_VERSION }}
             aptcacher=""
-          tags: ${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
+          tags: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect ${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
+          docker buildx imagetools inspect ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
