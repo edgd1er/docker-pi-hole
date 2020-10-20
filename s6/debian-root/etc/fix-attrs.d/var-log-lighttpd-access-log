@@ -1,0 +1,2 @@
+/var/log/lighttpd/access.log false 33:33 0755 0644
+/var/log/lighttpd/error.log false 33:33 0755 0644
