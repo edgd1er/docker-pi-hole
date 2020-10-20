@@ -13,6 +13,9 @@ docker-compose.yml
 etc-dnsmasq.d/
 etc-pihole/
 var-log/
+.idea/**
 
 # WIP/test stuff
 doco.yml
+
+gen_image_buildx.sh
