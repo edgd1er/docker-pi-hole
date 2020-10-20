@@ -1,0 +1,73 @@
+name: Docker pihole buildx armhf+amd64
+
+on:
+  pull_request:
+    branches: dev
+  push:
+    branches: dev
+    tags:
+
+env:
+  IMAGE: pihole
+  TAG: latest
+  aptCacher:
+  PIHOLE_BASE: pihole/debian-base:buster
+  PHP_ENV_CONFIG: /etc/lighttpd/conf-enabled/15-fastcgi-php.conf
+  PHP_ERROR_LOG: /var/log/lighttpd/error.log
+  S6_VERSION: v1.22.1.0
+
+jobs:
+  buildx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: latest
+          install: true
+          use: true
+      - name: Builder instance name
+        run: echo ${{ steps.buildx.outputs.name }}
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }}
+      - name: Login to Docker hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: ./Dockerfile
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          # removed linux/arm64
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7
+          push: true
+          build-args: |
+            NAME=${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}
+            PIHOLE_BASE=${{ env.PIHOLE_BASE }}
+            PHP_ENV_CONFIG=${{ env.PHP_ENV_CONFIG }}
+            S6_VERSION=${{ env.S6_VERSION }}
+            aptcacher=""
+          tags: ${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
+      - name: Inspect image
+        run: |
+          docker buildx imagetools inspect ${{ secrets.DOCKER_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
