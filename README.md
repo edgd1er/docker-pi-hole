@@ -1,3 +1,8 @@
+### Changed from original ###
+- Docker file ready for multi arch build
+- Fix CONDITIONAL_FORWARDING duplicates
+- lighttpd access et error logs are redirected to container stdout
+
 # Docker Pi-hole
 
 <p align="center">
