@@ -3,7 +3,7 @@ version: "3.7"
 
 x-common-args: &common-args
   PIHOLE_VERSION: ${PIHOLE_VERSION}
-  NAME: pihole/pihole
+  NAME: edgd1er/pihole
   MAINTAINER: adam@diginc.us
   S6_VERSION: v1.22.1.0
   PHP_ENV_CONFIG: /etc/lighttpd/conf-enabled/15-fastcgi-php.conf
