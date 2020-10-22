@@ -2,11 +2,9 @@ ARG PIHOLE_BASE
 #FROM --platform=$BUILDPLATFORM $PIHOLE_BASE
 FROM debian:buster-slim
 
-ARG TARGETARCH
-ENV PIHOLE_ARCH="${TARGETARCH}"
-ENV S6_ARCH=${TARGETARCH}
+ARG TARGETPLATFORM
 ARG S6_VERSION
-ENV S6OVERLAY_RELEASE "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${TARGETARCH}.tar.gz"
+ENV S6OVERLAY_RELEASE "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${TARGETPLATFORM}.tar.gz"
 
 RUN echo "running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 COPY install.sh /usr/local/bin/install.sh
@@ -49,7 +47,7 @@ ENV VERSION "${PIHOLE_VERSION}"
 ENV PATH /opt/pihole:${PATH}
 
 ARG NAME
-LABEL image="${NAME}:${PIHOLE_VERSION}_${TARGETARCH}"
+LABEL image="${NAME}:${PIHOLE_VERSION}_${TARGETPLATFORM}"
 ARG MAINTAINER
 LABEL maintainer="${MAINTAINER}"
 LABEL url="https://www.github.com/pi-hole/docker-pi-hole"
