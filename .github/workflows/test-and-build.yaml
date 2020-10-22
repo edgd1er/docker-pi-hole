@@ -1,15 +1,15 @@
 name: Test & Build
-on:
-  push:
-    branches:
-      - master
-      - dev
-      - v*
-      - beta-v*
-      - release/*
-    tags:
-      - v*
-  pull_request:
+#on:
+#  push:
+#    branches:
+#      - master
+#      - dev
+#      - v*
+#      - beta-v*
+#      - release/*
+#    tags:
+#      - v*
+#  pull_request:
 
 #env:
 #  DOCKER_HUB_REPO: pihole
