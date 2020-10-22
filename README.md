@@ -1,7 +1,9 @@
 ### Changed from original ###
-- Docker file ready for multi arch build
+- use Docker buildx for multi arch build
 - Fix CONDITIONAL_FORWARDING duplicates
 - lighttpd access et error logs are redirected to container stdout
+- based on debian-slim, not on pihole-debian based, might have problem on [synology](https://github.com/pi-hole/docker-base-images/tree/master/debian-base)
+- upgrade S6_OVERLAY from v1.22.1.0 to v2.1.0.1 
 
 # Docker Pi-hole
 
