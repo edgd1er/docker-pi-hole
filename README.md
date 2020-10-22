@@ -2,6 +2,7 @@
 - Docker file ready for multi arch build
 - Fix CONDITIONAL_FORWARDING duplicates
 - lighttpd access et error logs are redirected to container stdout
+- based on debian-slim, not on pihole-debian based, might have problem on synology
 
 # Docker Pi-hole
 
