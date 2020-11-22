@@ -53,7 +53,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v2
       - name: Download workspace files
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2.0.6
         with:
           name: gh-workspace
           path: .gh-workspace
