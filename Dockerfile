@@ -55,10 +55,6 @@ LABEL url="https://www.github.com/pi-hole/docker-pi-hole"
 HEALTHCHECK CMD dig +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 
 #Fx conditionnal forwarding
-RUN sed -i '/webpage.sh/i set -x'  /start.sh && \
-  sed -i '/\. \/opt\/pihole\/webpage.sh/i sed -i.bak "231s/CONDITIONAL_FORWARDING_IP/REV_SERVER_IP/" /opt/pihole/webpage.sh' /start.sh && \
-  sed -i '/\. \/opt\/pihole\/webpage.sh/i sed -i.bak "230s/CONDITIONAL_FORWARDING_DOMAIN/REV_SERVER_DOMAIN/" /opt/pihole/webpage.sh' /start.sh && \
-  sed -i '/\. \/opt\/pihole\/webpage.sh/i sed -i.bak "229s/CONDITIONAL_FORWARDING_REVERSE/REV_SERVER_CIDR/" /opt/pihole/webpage.sh' /start.sh && \
-  sed -i '/\. \/opt\/pihole\/webpage.sh/i sed -i.bak "228s#CONDITIONAL_FORWARDING#REV_SERVER#" /opt/pihole/webpage.sh' /start.sh
+RUN sed -i 's/add_setting \"REV_SERVER/change_setting \"REV_SERVER/' /opt/pihole/webpage.sh
 
 SHELL ["/bin/bash", "-c"]
