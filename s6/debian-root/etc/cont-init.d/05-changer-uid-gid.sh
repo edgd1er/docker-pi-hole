@@ -1,7 +1,6 @@
 #!/usr/bin/with-contenv bash
 set -e
 
-
 if [[ ${#UID} -gt 1 ]] && [[ $(id -u pihole ) -ne ${UID} ]]; then
   #set docker pihole user with UID number
   echo "pihole has now ${UID} as UID"
@@ -15,6 +14,6 @@ if [[ ${#GID} -gt 1 ]] && [[ $(id -g pihole ) -ne ${GID} ]]; then
   # add www-data to pihole group
 fi
 
-if [[ $(ip pihole | grep -c ${GID} ) -eq 0 ]]; then
+if [[ ${#GID} -gt 1 ]] && [[ $(id pihole | grep -c ${GID} ) -eq 0 ]]; then
   usermod -a -G pihole www-data
 fi
