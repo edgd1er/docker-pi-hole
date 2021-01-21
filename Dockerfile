@@ -55,6 +55,8 @@ LABEL url="https://www.github.com/pi-hole/docker-pi-hole"
 HEALTHCHECK CMD dig +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 
 #Fx conditionnal forwarding
-RUN sed -i 's/add_setting \"REV_SERVER/change_setting \"REV_SERVER/' /opt/pihole/webpage.sh
+RUN sed -i 's/add_setting \"REV_SERVER/change_setting \"REV_SERVER/' /opt/pihole/webpage.sh && \
+    #remove cache update during ditro_check
+    sed -i "s/update_package_cache /#update_package_cache /g" /root/ph_install.sh
 
 SHELL ["/bin/bash", "-c"]
