@@ -14,7 +14,7 @@ env:
   PIHOLE_BASE: pihole/debian-base:buster
   PHP_ENV_CONFIG: /etc/lighttpd/conf-enabled/15-fastcgi-php.conf
   PHP_ERROR_LOG: /var/log/lighttpd/error.log
-  S6_VERSION: v2.1.0.2
+  S6_VERSION: v2.2.0.1
 
 jobs:
   buildx:
