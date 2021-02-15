@@ -18,7 +18,7 @@ prepare_configs() {
     LIGHTTPD_USER="www-data"
     LIGHTTPD_GROUP="www-data"
     LIGHTTPD_CFG="lighttpd.conf.debian"
-    installConfigs
+
     touch "$setupVars"
     set +e
     mkdir -p /var/run/pihole /var/log/pihole
