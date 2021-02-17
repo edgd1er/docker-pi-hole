@@ -7,6 +7,9 @@ if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
     bashCmd='bash -e -x'
 fi
 
+#When using volumes for /var/cache, create missing folder
+[ ! -d /var/cache/lighttpd/uploads -o ! -d /var/cache/lighttpd/compress ] && mkdir -p /var/cache/lighttpd/{uploads,compress}
+
 # used to start dnsmasq here for gravity to use...now that conflicts port 53
 
 $bashCmd /start.sh
