@@ -9,6 +9,7 @@ fi
 
 #When using volumes for /var/cache, create missing folder
 [ ! -d /var/cache/lighttpd/uploads -o ! -d /var/cache/lighttpd/compress ] && mkdir -p /var/cache/lighttpd/{uploads,compress}
+chown -R www-data:www-data /var/cache/
 
 # used to start dnsmasq here for gravity to use...now that conflicts port 53
 
