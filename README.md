@@ -4,7 +4,7 @@
 - lighttpd access et error logs are redirected to container stdout
 - based on debian-slim, not on pihole-debian based, might have problem on [synology](https://github.com/pi-hole/docker-base-images/tree/master/debian-base)
 - upgrade S6_OVERLAY from v1.22.1.0 to v2.1.0.1
-- add UID/GID for pihole user as host system may require specific id/gid.
+- add  WEB_UID/WEB_GID=116, PIHOLE_UID, PIHOLE_GID for web-data and pihole user as host system may require specific id/gid.
 
 # Docker Pi-hole
 
@@ -33,8 +33,10 @@ services:
       - "80:80/tcp"
     environment:
       TZ: 'America/Chicago'
-      UID: '1001'
-      GID: '1000'
+      WEB_UID: '1001'
+      WEB_GID: '1000'
+      PIHOLE_UID: '1001'
+      PIHOLE_GID: '1000'
       # WEBPASSWORD: 'set a secure password here or it will be random'
     # Volumes store your data between container upgrades
     volumes:
