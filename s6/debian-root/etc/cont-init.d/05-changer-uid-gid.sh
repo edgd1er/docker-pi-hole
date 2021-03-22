@@ -1,19 +1,37 @@
 #!/usr/bin/with-contenv bash
 set -e
 
-if [[ ${#UID} -gt 1 ]] && [[ $(id -u pihole ) -ne ${UID} ]]; then
-  #set docker pihole user with UID number
-  echo "pihole has now ${UID} as UID"
-  usermod -u ${UID} pihole
-fi
+modifyUser()
+{
+  declare username=${1:-} newId=${2:-}
+  [[ -z ${username} || -z ${newId} ]] && return
 
-if [[ ${#GID} -gt 1 ]] && [[ $(id -g pihole ) -ne ${GID} ]]; then
-  # set container pihole group with GID number
-  echo "pihole group has now ${GID} as group id"
-  groupmod -g ${GID} pihole
-  # add www-data to pihole group
-fi
+  local currentId=$(id -u ${username})
+  [[ ${currentId} -eq ${newId} ]] && return
 
-if [[ ${#GID} -gt 1 ]] && [[ $(id pihole | grep -c ${GID} ) -eq 0 ]]; then
-  usermod -a -G pihole www-data
-fi
+  echo "user ${username} ${currentId} => ${newId}"
+  usermod -o -u ${newId} ${username}
+
+  find / -user ${currentId} -print0 2> /dev/null | \
+    xargs -0 -n1 chown -h ${username} 2> /dev/null
+}
+
+modifyGroup()
+{
+  declare groupname=${1:-} newId=${2:-}
+  [[ -z ${groupname} || -z ${newId} ]] && return
+
+  local currentId=$(id -g ${groupname})
+  [[ ${currentId} -eq ${newId} ]] && return
+
+  echo "group ${groupname} ${currentId} => ${newId}"
+  groupmod -o -g ${newId} ${groupname}
+
+  find / -group ${currentId} -print0 2> /dev/null | \
+    xargs -0 -n1 chgrp -h ${groupname} 2> /dev/null
+}
+
+modifyUser www-data ${WEB_UID}
+modifyGroup www-data ${WEB_GID}
+modifyUser pihole ${PIHOLE_UID}
+modifyGroup pihole ${PIHOLE_GID}
