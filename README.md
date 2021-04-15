@@ -30,7 +30,6 @@ services:
       - "53:53/udp"
       - "67:67/udp"
       - "80:80/tcp"
-      - "443:443/tcp"
     environment:
       TZ: 'America/Chicago'
       WEB_UID: '1001'
