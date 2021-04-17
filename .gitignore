@@ -19,3 +19,4 @@ var-log/
 doco.yml
 
 gen_image_buildx.sh
+docker-pi-hole.iml
