@@ -40,7 +40,7 @@ jobs:
           docker push "${ARCH_IMAGE}"
       - name: Upload gh-workspace
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2.2.3
         with:
           name: gh-workspace
           path: .gh-workspace
@@ -48,6 +48,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     needs: test-and-build
+    if: false == true
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
@@ -64,9 +65,9 @@ jobs:
         with:
           name: gh-workspace
           path: .gh-workspace
-      - name: Tag and Publish multi-arch images
-        env:
-          DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
-          DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-        run: |
-          ./gh-actions-deploy.sh
+      #- name: Tag and Publish multi-arch images
+      #  env:
+      #    DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+      #    DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
+      #  run: |
+      #    ./gh-actions-deploy.sh
