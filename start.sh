@@ -48,6 +48,7 @@ export adlistFile='/etc/pihole/adlists.list'
 # The below functions are all contained in bash_functions.sh
 . /bash_functions.sh
 
+set -x
 # Ensure we have all functions available to update our configurations
 . /opt/pihole/webpage.sh
 

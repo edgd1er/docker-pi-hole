@@ -22,6 +22,17 @@ apt-get install --no-install-recommends -y curl procps ca-certificates
 # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=923479
 c_rehash
 ln -s `which echo` /usr/local/bin/whiptail
+
+case $TARGETPLATFORM in
+  linux/amd64)
+    ARCH=amd64
+    ;;
+  linux/arm*)
+    ARCH=arm
+   ;;
+esac
+PIHOLE_ARCH=${ARCH}
+S6OVERLAY_RELEASE="https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${ARCH}.tar.gz"
 curl -L -s $S6OVERLAY_RELEASE | tar xvzf - -C /
 mv /init /s6-init
 
