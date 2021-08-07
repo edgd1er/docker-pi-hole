@@ -73,7 +73,7 @@ jobs:
           echo "WEB_VERSION=${{ github.event.inputs.web }}" >> VERSIONS
           echo "FTL_VERSION=${{ github.event.inputs.ftl }}" >> VERSIONS
       - name: Download workspace files
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2.0.10
         with:
           name: gh-workspace
           path: .gh-workspace
