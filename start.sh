@@ -38,6 +38,8 @@ export DHCP_LEASETIME
 export PIHOLE_DOMAIN
 export DHCP_IPv6
 export DHCP_rapid_commit
+export WEBTHEME
+export CUSTOM_CACHE_SIZE
 
 export adlistFile='/etc/pihole/adlists.list'
 
@@ -53,7 +55,7 @@ set -x
 . /opt/pihole/webpage.sh
 
 # PH_TEST prevents the install from actually running (someone should rename that)
-PH_TEST=true . $PIHOLE_INSTALL
+PH_TEST=true . "${PIHOLE_INSTALL}"
 
 echo " ::: Starting docker specific checks & setup for docker pihole/pihole"
 
@@ -136,6 +138,21 @@ else
     else
       echo "Existing DNS servers detected in setupVars.conf. Leaving them alone"
     fi
+fi
+
+# Parse the WEBTHEME variable, if it exists, and set the selected theme if it is one of the supported values.
+# If an invalid theme name was supplied, setup WEBTHEME to use the default-light theme.
+if [ -n "${WEBTHEME}" ]; then
+    case "${WEBTHEME}" in
+      "default-dark" | "default-darker" | "default-light")
+        echo "Setting Web Theme based on WEBTHEME variable, using value ${WEBTHEME}"
+        change_setting "WEBTHEME" "${WEBTHEME}"
+        ;;
+      *)
+        echo "Invalid theme name supplied: ${WEBTHEME}, falling back to default-light."
+        change_setting "WEBTHEME" "default-light"
+        ;;
+    esac
 fi
 
 [[ -n "${DHCP_ACTIVE}" && ${DHCP_ACTIVE} == "true" ]] && echo "Setting DHCP server" && setup_dhcp
