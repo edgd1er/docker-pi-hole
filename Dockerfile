@@ -1,20 +1,27 @@
-ARG PIHOLE_BASE
-FROM $PIHOLE_BASE
+# syntax=docker/dockerfile:1
+FROM debian:buster-slim
 
-ARG PIHOLE_ARCH
-ENV PIHOLE_ARCH "${PIHOLE_ARCH}"
 ARG PIHOLE_TAG
-ENV PIHOLE_TAG "${PIHOLE_TAG}"
-ARG S6_ARCH
+ENV PIHOLE_TAG "${PIHOLE_TAG:-latest}"
 ARG S6_VERSION
-ENV S6OVERLAY_RELEASE "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${S6_ARCH}.tar.gz"
+ARG aptCacher
+ARG PHP_ENV_CONFIG
+ENV PHP_ENV_CONFIG="${PHP_ENV_CONFIG:-/etc/lighttpd/conf-enabled/15-fastcgi-php.conf}"
+ARG PHP_ERROR_LOG
+ENV PHP_ERROR_LOG="${PHP_ERROR_LOG:-/var/log/lighttpd/error.log}"
 
+RUN echo "running on $(dpkg --print-architecture)"
 COPY install.sh /usr/local/bin/install.sh
 COPY VERSIONS /etc/pi-hole-versions
 ENV PIHOLE_INSTALL /etc/.pihole/automated\ install/basic-install.sh
 
-RUN bash -ex install.sh 2>&1 && \
-    rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+RUN if [[ -n ${aptCacher} ]]; then printf "Acquire::http::Proxy \"http://%s:3142\";" "${aptCacher}">/etc/apt/apt.conf.d/01proxy && \
+    printf "Acquire::https::Proxy \"http://%s:3142\";" "${aptCacher}">>/etc/apt/apt.conf.d/01proxy ; fi && \
+    #echo "Dir::Cache \"\";\nDir::Cache::archives \"\";" | tee /etc/apt/apt.conf.d/02nocache && \
+    printf "#/etc/dpkg/dpkg.cfg.d/01_nodoc\n\n# Delete locales\npath-exclude=/usr/share/locale/*\n\n# Delete man pages\npath-exclude=/usr/share/man/*\n\n# Delete docs\npath-exclude=/usr/share/doc/*\npath-include=/usr/share/doc/*/copyright" | tee /etc/dpkg/dpkg.cfg.d/03nodoc && \
+    apt-get update && apt-get upgrade -y && bash -ex install.sh 2>&1 && \
+    rm -rf /var/cache/apt/archives /var/lib/apt/lists/* && \
+     if [[ -n $aptCacher ]]; then echo "" > /etc/apt/apt.conf.d/01proxy; fi
 
 ENTRYPOINT [ "/s6-init" ]
 
@@ -23,9 +30,9 @@ COPY s6/service /usr/local/bin/service
 
 # php config start passes special ENVs into
 ARG PHP_ENV_CONFIG
-ENV PHP_ENV_CONFIG "${PHP_ENV_CONFIG}"
+ENV PHP_ENV_CONFIG "${PHP_ENV_CONFIG:-/etc/lighttpd/conf-enabled/15-fastcgi-php.conf}"
 ARG PHP_ERROR_LOG
-ENV PHP_ERROR_LOG "${PHP_ERROR_LOG}"
+ENV PHP_ERROR_LOG "${PHP_ERROR_LOG:-/var/log/lighttpd/error.log}"
 COPY ./start.sh /
 COPY ./bash_functions.sh /
 
@@ -49,7 +56,7 @@ ENV VERSION "${PIHOLE_VERSION}"
 ENV PATH /opt/pihole:${PATH}
 
 ARG NAME
-LABEL image="${NAME}:${PIHOLE_VERSION}_${PIHOLE_ARCH}"
+LABEL image="${NAME}:${PIHOLE_VERSION}_${TARGETPLATFORM}"
 ARG MAINTAINER
 LABEL maintainer="${MAINTAINER}"
 LABEL url="https://www.github.com/pi-hole/docker-pi-hole"
