@@ -57,7 +57,7 @@ jobs:
           echo "WEB_VERSION=devel" >> VERSIONS
           echo "FTL_VERSION=development" >> VERSIONS
       - name: Download workspace files
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2.0.10
         with:
           name: gh-workspace
           path: .gh-workspace
