@@ -24,5 +24,7 @@ services:
     # Recommended but not required (DHCP needs NET_ADMIN)
     #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
     cap_add:
-      - NET_ADMIN
+      - SYS_ADMIN
+      - IPC_LOCK
+      - CHOWN
     restart: unless-stopped
