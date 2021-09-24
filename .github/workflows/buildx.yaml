@@ -9,6 +9,7 @@ on:
       - master
     tags:
       - v*
+  workflow_dispatch:
 
 env:
   IMAGE: pihole
@@ -72,9 +73,10 @@ jobs:
           push: true
           build-args: |
             NAME=${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}
-            PIHOLE_BASE=${{ env.PIHOLE_BASE }}
+            PIHOLE_VERSION=${{ env.TAG }}
             PHP_ENV_CONFIG=${{ env.PHP_ENV_CONFIG }}
             S6_VERSION=${{ env.S6_VERSION }}
+            MAINTAINER=${{ env.GITHUB_SHA }}
           tags: ${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}:${{ env.TAG }}
 
       - name: Inspect image
