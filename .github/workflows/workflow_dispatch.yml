@@ -58,6 +58,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+        if:  ${{ false }}
       -
         name: Build and push
         uses: docker/build-push-action@v2
@@ -72,4 +73,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole:${{ github.event.inputs.name }}
-            ghcr.io/${{ github.repository_owner }}/pihole:${{ github.event.inputs.name }}
+          #ghcr.io/${{ github.repository_owner }}/pihole:${{ github.event.inputs.name }}

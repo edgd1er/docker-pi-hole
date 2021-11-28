@@ -17,7 +17,7 @@ default: build
 all: lint build test
 
 help:
-
+	@$(MAKE) -pRrq -f $(lastword $(MAKEFILE_LIST)) : 2>/dev/null | awk -v RS= -F: '/^# Fichiers/,/^# Base/ {if ($$1 !~ "^[#.]") {print $$1}}' | sort | egrep -v -e '^[^[:alnum:]]' -e '^$@$$'
 
 lint:
 	$(DOCKER) run --rm -i hadolint/hadolint < ./Dockerfile
