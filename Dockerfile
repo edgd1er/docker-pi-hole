@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM debian:buster-slim
+FROM debian:bullseye-slim
 
 ARG aptCacher
 ARG PIHOLE_VERSION

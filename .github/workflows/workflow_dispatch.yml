@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ARCH: amd64
-      DEBIAN_VERSION: buster
+      DEBIAN_VERSION: bullseye
       CORE_VERSION: ${{ github.event.inputs.core }}
       WEB_VERSION: ${{ github.event.inputs.web }}
       FTL_VERSION: ${{ github.event.inputs.ftl }}
