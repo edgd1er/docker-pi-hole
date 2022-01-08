@@ -25,11 +25,20 @@ prepare_configs() {
     mkdir -p /var/run/pihole /var/log/pihole
     
     chown pihole:root /etc/lighttpd
-    
-    # In case of `pihole` UID being changed, re-chown the pihole scripts and pihole commmand
-    chown -R pihole:root "${PI_HOLE_INSTALL_DIR}"
-    chown pihole:root "${PI_HOLE_BIN_DIR}/pihole"
-    
+    chown pihole:pihole "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf" "/var/log/pihole"
+    chmod 644 "${PI_HOLE_CONFIG_DIR}/pihole-FTL.conf"
+    if [[ -e "${PI_HOLE_CONFIG_DIR}/pihole-FTL.db" ]]; then
+      chown pihole:pihole "${PI_HOLE_CONFIG_DIR}/pihole-FTL.db"
+      chmod 644 "${PI_HOLE_CONFIG_DIR}/pihole-FTL.db"
+    fi
+    touch /var/log/pihole-FTL.log /run/pihole-FTL.pid /run/pihole-FTL.port /var/log/pihole.log
+    chown pihole:pihole /var/run/pihole /var/log/pihole
+    test -f /var/run/pihole/FTL.sock && rm /var/run/pihole/FTL.sock
+    chown pihole:pihole /var/log/pihole-FTL.log /run/pihole-FTL.pid /run/pihole-FTL.port /etc/pihole /var/log/pihole.log
+    if [[ -e /etc/pihole/dhcp.leases ]]; then
+      chown pihole:pihole /etc/pihole/dhcp.leases
+    fi
+    chmod 0644 /var/log/pihole-FTL.log /run/pihole-FTL.pid /run/pihole-FTL.port /var/log/pihole.log
     set -e
     # Update version numbers
     pihole updatechecker
