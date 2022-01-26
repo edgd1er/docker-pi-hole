@@ -9,6 +9,8 @@ fi
 gravityDBfile="/etc/pihole/gravity.db"
 config_file="/etc/pihole/pihole-FTL.conf"
 
+[[ -f /run/crond.reboot ]] && rm -f /run/crond.reboot || true
+
 #When using volumes for /var/cache, create missing folder
 [ ! -d /var/cache/lighttpd/uploads -o ! -d /var/cache/lighttpd/compress ] && mkdir -p /var/cache/lighttpd/{uploads,compress}
 chown -R www-data:www-data /var/cache/
