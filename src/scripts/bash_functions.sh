@@ -372,7 +372,7 @@ setup_web_password() {
     PASS="$WEBPASSWORD"
 
     # Explicitly turn off bash printing when working with secrets
-    { set +x; } 2>/dev/null
+    #{ set +x; } 2>/dev/null
 
     if [[ "$PASS" == "" ]] ; then
         echo "" | pihole -a -p

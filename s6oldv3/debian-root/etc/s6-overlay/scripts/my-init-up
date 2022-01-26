@@ -1,0 +1,19 @@
+#!/command/with-contenv bash
+
+if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
+    set -x ;
+    bashCmd='bash -e -x'
+fi
+
+chmod +x /etc/s6-overlay/scripts/*
+
+s6-echo "Starting 05-changer-uid-gid.sh"
+${bashCmd} /etc/s6-overlay/scripts/05-changer-uid-gid.sh
+
+echo "starting 20-start.sh"
+${bashCmd} /etc/s6-overlay/scripts/20-start.sh
+
+echo "Starting lighttpd & pihole-FTL"
+service lighttpd start
+service pihole-FTL start
+
