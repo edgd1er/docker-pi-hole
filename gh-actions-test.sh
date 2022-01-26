@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -ex
+set -x
 
 # Script ran by Github actions for tests
 #
@@ -16,7 +16,7 @@ if [[ "$1" == "enter" ]]; then
 fi
 
 # generate and build dockerfile
-docker build --tag image_pipenv --file Dockerfile_build .
+docker build  --tag image_pipenv --file Dockerfile_build .
 docker run --rm \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "$(pwd):/$(pwd)" \
@@ -29,6 +29,7 @@ docker run --rm \
     --env CORE_VERSION="${CORE_VERSION}" \
     --env WEB_VERSION="${WEB_VERSION}" \
     --env FTL_VERSION="${FTL_VERSION}" \
+    --env S6_OVERLAY_VERSION="${S6_OVERLAY_VERSION}" \
     ${enter} image_pipenv
 
 mkdir -p ".gh-workspace/${DEBIAN_VERSION}/"

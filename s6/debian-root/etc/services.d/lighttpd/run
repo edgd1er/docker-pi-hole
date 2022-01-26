@@ -2,6 +2,11 @@
 
 s6-echo "Starting lighttpd"
 
+#create if missing.
+[[ ! -d /var/log/lighttpd ]] && mkdir -p /var/log/lighttpd
+#set proper rights to ensure files will be readable.
+chmod 755 /var/log/lighttpd
+
 if [[ 1 -eq ${WEBLOGS_STDOUT:-0} ]]; then
   #lighthttpd cannot use /dev/stdout https://redmine.lighttpd.net/issues/2731
   for fi in /var/log/lighttpd/access.log /var/log/lighttpd/error.log

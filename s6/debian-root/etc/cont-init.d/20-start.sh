@@ -2,25 +2,31 @@
 set -e
 
 bashCmd='bash -e'
-if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
-    set -x ;
-    bashCmd='bash -e -x'
+if [ "${PH_VERBOSE:-0}" -gt 0 ]; then
+  set -x
+  bashCmd='bash -e -x'
 fi
+gravityDBfile="/etc/pihole/gravity.db"
+config_file="/etc/pihole/pihole-FTL.conf"
+
+#When using volumes for /var/cache, create missing folder
+[ ! -d /var/cache/lighttpd/uploads -o ! -d /var/cache/lighttpd/compress ] && mkdir -p /var/cache/lighttpd/{uploads,compress}
+chown -R www-data:www-data /var/cache/
+
+# used to start dnsmasq here for gravity to use...now that conflicts port 53
 
 $bashCmd /start.sh
+
 # Gotta go fast, no time for gravity
 if [ -n "$PYTEST" ]; then
     sed -i 's/^gravity_spinup$/#gravity_spinup # DISABLED FOR PYTEST/g' "$(which gravity.sh)"
 fi
 
-gravityDBfile="/etc/pihole/gravity.db"
-config_file="/etc/pihole/pihole-FTL.conf"
 # make a point to mention which config file we're checking, as breadcrumb to revisit if/when pihole-FTL.conf is succeeded by TOML
 echo "  Checking if custom gravity.db is set in ${config_file}"
 if [[ -f "${config_file}" ]]; then
     gravityDBfile="$(grep --color=never -Po "^GRAVITYDB=\K.*" "${config_file}" 2> /dev/null || echo "/etc/pihole/gravity.db")"
 fi
-
 
 if [ -z "$SKIPGRAVITYONBOOT" ] || [ ! -e "${gravityDBfile}" ]; then
     if [ -n "$SKIPGRAVITYONBOOT" ];then

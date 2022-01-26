@@ -5,22 +5,39 @@ on:
   push:
     branches:
       - dev
+    paths-ignore:
+      - '.github/**'
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
+
+env:
+  aptCacher: ''
+  ARCH: amd64
+  BUILD_NOCACHE: false
+  DOCKER_PUSH: true
+  DEBIAN_VERSION: bullseye
+  S6_OVERLAY_VERSION: v2.2.0.3
+  IMAGE: pihole
+  PIHOLE_DOCKER_TAG: latest
+  NAME: edgd1er/pihole
+  PHP_ENV_CONFIG: /etc/lighttpd/conf-enabled/15-fastcgi-php.conf
+  PHP_ERROR_LOG: /var/log/lighttpd/error.log
 
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      ARCH: amd64
-      DEBIAN_VERSION: bullseye
+      BUILD_NOCACHE: true
+      DOCKER_PUSH: false
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
       - name: Run Tests
         run: |
-          echo "Building ${ARCH}-${DEBIAN_VERSION}"
+          echo "Building ${ARCH}-${DEBIAN_VERSION} with s6 ${S6_OVERLAY_VERSION}"
           ./gh-actions-test.sh
 
   build-and-publish:
@@ -51,12 +68,12 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
-            ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
-            ghcr.io/${{ github.repository_owner }}/pihole
+            ${{ secrets.DOCKERHUB_USER }}/pihole
           flavor: |
             latest=${{ startsWith(github.ref, 'refs/tags/') }}
+            prefix=test,onlatest=true
           tags: |
-            type=schedule
+            type=schedule,pattern=nightly
             type=ref,event=branch,enable=${{ github.event_name != 'schedule' }}
             type=ref,event=tag
       -
@@ -67,7 +84,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASS }}
       -
         name: Login to GitHub Container Registry
+        if: ${{ false }}
         uses: docker/login-action@v2
+        if: ${{ false }}
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -79,7 +98,13 @@ jobs:
           context: .
           platforms: linux/amd64, linux/arm64, linux/386, linux/arm/v7, linux/arm/v6
           build-args: |
+            S6_OVERLAY_VERSION=${{ env.S6_OVERLAY_VERSION }}
             PIHOLE_DOCKER_TAG=${{ steps.meta.outputs.version }}
-          push: true
+            DEBIAN_VERSION=${{ env.DEBIAN_VERSION }}
+            NAME=${{ secrets.DOCKERHUB_USER }}/${{ env.IMAGE }}
+            PHP_ENV_CONFIG=${{ env.PHP_ENV_CONFIG }}
+            MAINTAINER=${{ env.GITHUB_SHA }}
+          no-cache: ${{ env.BUILD_NOCACHE }}
+          push: ${{ env.DOCKER_PUSH }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
