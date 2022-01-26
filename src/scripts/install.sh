@@ -36,8 +36,8 @@ fi
 
 detect_arch
 
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jxpf - -C /
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jxpf - -C /
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jxpf - -C /
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jxpf - -C /
 
 # Preseed variables to assist with using --unattended install
 {
@@ -65,6 +65,7 @@ if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly'  ]]; then
 fi
 
 sed -i '/^WEBPASSWORD/d' /etc/pihole/setupVars.conf
+sed -i 's/ quiet//' /etc/cron.d/pihole
 
 # sed a new function into the `pihole` script just above the `helpFunc()` function for later use.
 sed -i $'s/helpFunc() {/unsupportedFunc() {\\\n  echo "Function not supported in Docker images"\\\n  exit 0\\\n}\\\n\\\nhelpFunc() {/g' /usr/local/bin/pihole
