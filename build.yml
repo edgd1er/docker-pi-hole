@@ -1,0 +1,19 @@
+# Docker Compose build file: docker-compose -f build.yml build
+version: "3.7"
+
+x-common-args: &common-args
+  PIHOLE_DOCKER_TAG: "nightly"
+  CORE_VERSION: ${CORE_VERSION}
+  WEB_VERSION: ${WEB_VERSION}
+  FTL_VERSION: ${FTL_VERSION}
+  S6_OVERLAY_VERSION: ${S6VERSION}
+  DEBIAN_VERSION: ${DEBIAN_VERSION}
+
+
+services:
+  amd64:
+    image: edgd1er/pihole:${PIHOLE_DOCKER_TAG}-amd64-${DEBIAN_VERSION:-bullseye}
+    build:
+      context: .
+      args:
+        <<: *common-args
