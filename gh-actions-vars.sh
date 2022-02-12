@@ -2,14 +2,20 @@
 set -a
 
 # @environment ${ARCH}                    The architecture to build. Defaults to 'amd64'.
-# @environment ${DEBIAN_VERSION}          Debian version to build. Defaults to 'buster'.
+# @environment ${DEBIAN_VERSION}          Debian version to build. Defaults to 'bullseye'.
 # @environment ${DOCKER_HUB_REPO}         The docker hub repo to tag images for. Defaults to 'pihole'.
 # @environment ${DOCKER_HUB_IMAGE_NAME}   The name of the resulting image. Defaults to 'pihole'.
 
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD | sed "s/\//-/g")
 GIT_TAG=$(git describe --tags --exact-match 2> /dev/null || true)
 
-DEFAULT_DEBIAN_VERSION="buster"
+DEFAULT_DEBIAN_VERSION="bullseye"
+DEFAULT_S6_OVERLAY_VERSION="v2.2.0.3"
+
+if [[ -z "${S6_OVERLAY_VERSION}" ]]; then
+    S6_OVERLAY_VERSION=${DEFAULT_S6_OVERLAY_VERSION}
+    echo "Defaulting S6_OVERLAY_VERSION to ${S6_OVERLAY_VERSION}"
+fi
 
 if [[ -z "${ARCH}" ]]; then
     ARCH="amd64"
@@ -22,7 +28,7 @@ if [[ -z "${DEBIAN_VERSION}" ]]; then
 fi
 
 if [[ -z "${DOCKER_HUB_REPO}" ]]; then
-    DOCKER_HUB_REPO="pihole"
+    DOCKER_HUB_REPO="edgd1er"
     echo "Defaulting DOCKER_HUB_REPO to ${DOCKER_HUB_REPO}"
 fi
 
