@@ -5,7 +5,9 @@
 # @param ${ARCH_IMAGE}       What the Docker Hub Image should be tagged as [default: None]
 
 set -eux
-./Dockerfile.py -v --no-cache --arch="${ARCH}" --debian="${DEBIAN_VERSION}" --hub_tag="${ARCH_IMAGE}"
+
+#./Dockerfile.py -v --no-cache --arch="${ARCH}" --debian="${DEBIAN_VERSION}" --s6="${S6_OVERLAY_VERSION}" --hub_tag="${ARCH_IMAGE}"
+./Dockerfile.py -v --arch="${ARCH}" --debian="${DEBIAN_VERSION}" --s6="${S6_OVERLAY_VERSION}" --hub_tag="${ARCH_IMAGE}"
 docker images
 
 # TODO: Add junitxml output and have something consume it

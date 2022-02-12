@@ -2,7 +2,7 @@
 """ Dockerfile.py - generates and build dockerfiles
 
 Usage:
-  Dockerfile.py [--hub_tag=<tag>] [--arch=<arch> ...] [--debian=<version> ...] [-v] [-t] [--no-build] [--no-cache] [--fail-fast]
+  Dockerfile.py [--hub_tag=<tag>] [--arch=<arch> ...] [--debian=<version> ...] [--s6=<version>] [-v] [-t] [--no-build] [--no-cache] [--fail-fast]
 
 Options:
     --no-build           Skip building the docker images
@@ -11,6 +11,7 @@ Options:
     --hub_tag=<tag>      What the Docker Hub Image should be tagged as [default: None]
     --arch=<arch>        What Architecture(s) to build     [default: amd64 armel armhf arm64]
     --debian=<version>   What debian version(s) to build   [default: stretch buster bullseye]
+    --s6=<version>       What S6_OVERLAY_VERSION to use
     -v                   Print docker's command output     [default: False]
     -t                   Print docker's build time         [default: False]
 
@@ -32,7 +33,7 @@ def build_dockerfiles(args) -> bool:
 
     for arch in args['--arch']:
         for debian_version in args['--debian']:
-            all_success = build('pihole', arch, debian_version, args['--hub_tag'], args['-t'], args['--no-cache'], args['-v']) and all_success
+            all_success = build('pihole', arch, debian_version, args['--s6'], args['--hub_tag'], args['-t'], args['--no-cache'], args['-v']) and all_success
             if not all_success and args['--fail-fast']:
                 return False
     return all_success
@@ -53,7 +54,7 @@ def run_and_stream_command_output(command, environment_vars, verbose) -> bool:
     return build_result.returncode == 0
 
 
-def build(docker_repo: str, arch: str, debian_version: str, hub_tag: str, show_time: bool, no_cache: bool, verbose: bool) -> bool:
+def build(docker_repo: str, arch: str, debian_version: str, s6: str, hub_tag: str, show_time: bool, no_cache: bool, verbose: bool) -> bool:
     # remove the `pihole/pihole:` from hub_tag for use elsewhere
     tag_name = hub_tag.split(":",1)[1]
     create_tag = f'{docker_repo}:{tag_name}'
@@ -61,8 +62,9 @@ def build(docker_repo: str, arch: str, debian_version: str, hub_tag: str, show_t
     time_arg = 'time' if show_time else ''
     cache_arg = '--no-cache' if no_cache else ''
     build_env = os.environ.copy()
-    build_env['PIHOLE_DOCKER_TAG'] = os.environ.get('GIT_TAG', None)
+    build_env['PIHOLE_DOCKER_TAG'] = os.environ.get('GIT_TAG', 'test')
     build_env['DEBIAN_VERSION'] = debian_version
+    build_env['S6_OVERLAY_VERSION'] = s6
     build_command = f'{time_arg} docker-compose -f build.yml build {cache_arg} --pull {arch}'
     print(f' ::: Building {arch} into {create_tag}')
     success = run_and_stream_command_output(build_command, build_env, verbose)
