@@ -103,7 +103,7 @@ jobs:
 
       - name: Build and no push
         if: ${{ env.DOCKER_load }}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
@@ -124,7 +124,7 @@ jobs:
 
       - name: Build multi platforms and push
         if:  ${{ env.DOCKER_PUSH }}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: .
