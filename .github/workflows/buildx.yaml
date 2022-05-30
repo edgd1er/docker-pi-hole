@@ -32,11 +32,11 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Checkout dev branch if we are building nightly
         if: github.event_name == 'schedule'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: dev
 
