@@ -48,7 +48,7 @@ RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERS
     && bash -x /usr/local/bin/install.sh 2>&1 \
     # S6_GLOBAL_PATH ha nos effect
     # && mkdir -p /etc/s6-overlay/config/ && echo "${S6_GLOBAL_PATH}" > /etc/s6-overlay/config/global_path \
-    && sed -i "s#quiet#>/var/log/pihole_flush.log#" /etc/cron.d/pihole \
+    && sed -i "s#once quiet#once \>/var/log/pihole_flush.log#" /etc/cron.d/pihole \
     && sed -i "s# \* \* 7# * * *#" /etc/cron.d/pihole \
     && rm -rf /var/lib/apt/lists/* \
     && chmod +x /padd.sh \
