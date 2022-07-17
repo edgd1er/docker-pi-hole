@@ -65,7 +65,6 @@ if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly'  ]]; then
 fi
 
 sed -i '/^WEBPASSWORD/d' /etc/pihole/setupVars.conf
-sed -i 's/ quiet//' /etc/cron.d/pihole
 
 # sed a new function into the `pihole` script just above the `helpFunc()` function for later use.
 sed -i $'s/helpFunc() {/unsupportedFunc() {\\\n  echo "Function not supported in Docker images"\\\n  exit 0\\\n}\\\n\\\nhelpFunc() {/g' /usr/local/bin/pihole

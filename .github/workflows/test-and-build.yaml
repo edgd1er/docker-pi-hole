@@ -28,9 +28,6 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      ARCH: amd64
-      DEBIAN_VERSION: bullseye-slim
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -43,9 +40,6 @@ jobs:
     if: github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
-    env:
-      S6VERSION: 3.1.1.2
-      DEBIAN_VERSION: bullseye-slim
     steps:
       - name: Checkout
         if: github.event_name != 'schedule'
@@ -106,3 +100,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/pihole:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USER }}/pihole:buildcache,mode=max
+      -
+        name: Inspect builder
+        run: |
+          echo "Name:      ${{ steps.build-and-publish.outputs.name }}"
+          echo "Endpoint:  ${{ steps.build-and-publish.outputs.endpoint }}"
+          echo "Status:    ${{ steps.build-and-publish.outputs.status }}"
+          echo "Flags:     ${{ steps.build-and-publish.outputs.flags }}"
+          echo "Platforms: ${{ steps.build-and-publish.outputs.platforms }}"
