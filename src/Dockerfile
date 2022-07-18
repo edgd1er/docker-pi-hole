@@ -57,29 +57,29 @@ RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERS
 
 # php config start passes special ENVs into
 ARG PHP_ENV_CONFIG
-ENV PHP_ENV_CONFIG /etc/lighttpd/conf-enabled/15-fastcgi-php.conf
+ENV PHP_ENV_CONFIG=/etc/lighttpd/conf-enabled/15-fastcgi-php.conf
 ARG PHP_ERROR_LOG
-ENV PHP_ERROR_LOG /var/log/lighttpd/error-pihole.log
+ENV PHP_ERROR_LOG=/var/log/lighttpd/error-pihole.log
 COPY ./scripts/start.sh /
 COPY ./scripts/bash_functions.sh /
 COPY ./scripts/gravityonboot.sh /
 
 # IPv6 disable flag for networks/devices that do not support it
-ENV IPv6 True
+ENV IPv6=True
 
 EXPOSE 53 53/udp
 EXPOSE 67/udp
 EXPOSE 80
 
-ENV S6_LOGGING 0
-ENV S6_KEEP_ENV 1
-ENV S6_BEHAVIOUR_IF_STAGE2_FAILS 1
+ENV S6_LOGGING=0
+ENV S6_KEEP_ENV=1
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=1
 
-ENV FTLCONF_REPLY_ADDR4 0.0.0.0
-ENV FTL_CMD no-daemon
-ENV DNSMASQ_USER pihole
+ENV FTLCONF_REPLY_ADDR4=0.0.0.0
+ENV FTL_CMD=no-daemon
+ENV DNSMASQ_USER=pihole
 
-ENV PATH /:/opt/pihole:${PATH}
+ENV PATH=/:/opt/pihole:${PATH}
 
 HEALTHCHECK CMD dig +short +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 

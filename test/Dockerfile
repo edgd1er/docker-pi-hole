@@ -21,6 +21,6 @@ RUN pipenv install --system \
     && sed -i 's|/bin/sh|/bin/bash|g' /usr/local/lib/python3.8/site-packages/testinfra/backend/docker.py
 
 RUN echo "set -ex && cmd.sh && \$@" > /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/cmd.sh
 ENTRYPOINT entrypoint.sh
 CMD cmd.sh
