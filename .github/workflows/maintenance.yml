@@ -1,13 +1,14 @@
 name: Maintenance 🧰
 
 on:
-  #schedule:
-  #  - cron: "0 0 * * *"
+  schedule:
+    - cron: "0 8 * * *"
   workflow_dispatch:
 
 jobs:
   dangling_images_removal:
     runs-on: ubuntu-latest
+    if: ${{ false }}
     name: Cleanup dangling images from GHCR 🧹📦
     # Errors will probably be caused by excesses in API quota, so we can safely continue.
     # Remaining images will be removed in the next scheduled run.
@@ -21,10 +22,9 @@ jobs:
           - 'pihole'
           - 'ftl-build'
           - 'docker-pi-hole-base'
-
     steps:
       - name: Clone repository 🔽
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v3
 
       - name: Run deletion script 🗑
         run: ./delete_ghcr_dangling_images.sh ${{ matrix.container }}

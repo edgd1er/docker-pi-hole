@@ -1,13 +1,14 @@
 #!/bin/bash
 # This script patches all service commands into the appropriate s6- commands
 # pi-hole upstream scripts need a 'service' interface. why not systemd? docker said so.
+timeout=5000
 
 start() {
   restart
 }
 
 stop() {
-  /command/s6-svc -wD -d -T2500 /run/service/"$service"
+  /command/s6-svc -wD -d -T$timeout /run/service/"$service"
 }
 
 restart() {
@@ -33,7 +34,7 @@ restart() {
 
   # Only attempt to start the service if it is not already running
   if [ -z "$pid" ]; then
-    /command/s6-svc -wu -u -T2500 /run/service/"$service"
+    /command/s6-svc -wu -u -T$timeout /run/service/"$service"
   fi
 
 }
