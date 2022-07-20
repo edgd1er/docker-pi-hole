@@ -29,6 +29,7 @@ ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=30000
 ENV S6_GLOBAL_PATH=${PATH}:/opt/pihole;
 ENV PATH=${S6_GLOBAL_PATH}
 ENV PIHOLE_INSTALL=/etc/.pihole/automated\ install/basic-install.sh
+ENV S6_SVC_TIMEOUT=2500
 
 #add apt-cacher setting if present:
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
