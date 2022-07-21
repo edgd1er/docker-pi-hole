@@ -1,0 +1,19 @@
+name: check s6-overlay version
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+env:
+  S6VERSION: 3.1.1.2
+
+jobs:
+  check-s6_version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: get latest version
+        id: getlatestversion
+        run: |
+          ver=$(curl -s "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" | jq .name | grep -oP "([0-9]+\.)+[0-9-]+")
+          echo "s6 build version: ${{ env.S6VERSION }}, latest github s6 version: ${ver}"
+          if [[ ${{ env.S6VERSION }} != ${ver} ]]; then exit 1; fi
