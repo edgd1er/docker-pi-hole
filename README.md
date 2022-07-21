@@ -1,3 +1,21 @@
+[![Maintenance](https://github.com/edgd1er/docker-pi-hole/actions/workflows/maintenance.yml/badge.svg)](https://github.com/edgd1er/docker-pi-hole/actions/workflows/maintenance.yml)
+[![buildx](https://github.com/edgd1er/docker-pi-hole/actions/workflows/test-and-build.yaml/badge.svg)](https://github.com/edgd1er/docker-pi-hole/actions/workflows/test-and-build.yaml)
+[![buildx](https://github.com/edgd1er/docker-pi-hole/actions/workflows/buildx.yaml/badge.svg)](https://github.com/edgd1er/docker-pi-hole/actions/workflows/buildx.yaml)
+[![checkVersion](https://github.com/edgd1er/docker-pi-hole/actions/workflows/checkVersion.yml/badge.svg)](https://github.com/edgd1er/docker-pi-hole/actions/workflows/checkVersion.yml)
+[![gitGuardian](https://github.com/edgd1er/docker-pi-hole/actions/workflows/gitguardian.yml/badge.svg)](https://github.com/edgd1er/docker-pi-hole/actions/workflows/gitguardian.yml)
+
+
+Original pi-hole/docker-pi-hole stats:
+
+[![Build Status](https://github.com/pi-hole/docker-pi-hole/workflows/Test%20&%20Build/badge.svg)](https://github.com/pi-hole/docker-pi-hole/actions?query=workflow%3A%22Test+%26+Build%22) [![Docker Stars](https://img.shields.io/docker/stars/pihole/pihole.svg?maxAge=604800)](https://store.docker.com/community/images/pihole/pihole) [![Docker Pulls](https://img.shields.io/docker/pulls/pihole/pihole.svg?maxAge=604800)](https://store.docker.com/community/images/pihole/pihole)
+
+### Changed from original ###
+- use Docker buildx for multi arch build
+- lighttpd access and error logs are redirected to container stdout (loose old query search, though)
+- based on debian-slim, not on pihole-debian based, might have problem on [synology](https://github.com/pi-hole/docker-base-images/tree/master/debian-base)
+- upgrade S6_OVERLAY from v1.22.1.0 to v2.2.0.3
+- add  WEB_UID/WEB_GID=116, PIHOLE_UID, PIHOLE_GID for web-data and pihole user as host system may require specific id/gid.
+
 # Docker Pi-hole
 
 <p align="center">
@@ -43,6 +61,10 @@ services:
       - "80:80/tcp"
     environment:
       TZ: 'America/Chicago'
+      WEB_UID: '1001'
+      WEB_GID: '1000'
+      PIHOLE_UID: '1001'
+      PIHOLE_GID: '1000'
       # WEBPASSWORD: 'set a secure password here or it will be random'
     # Volumes store your data between container upgrades
     volumes:
@@ -65,8 +87,6 @@ A [Docker](https://www.docker.com/what-docker) project to make a lightweight x86
 1) Install docker for your [x86-64 system](https://www.docker.com/community-edition) or [ARMv7 system](https://www.raspberrypi.org/blog/docker-comes-to-raspberry-pi/) using those links. [Docker-compose](https://docs.docker.com/compose/install/) is also recommended.
 2) Use the above quick start example, customize if desired.
 3) Enjoy!
-
-[![Build Status](https://github.com/pi-hole/docker-pi-hole/workflows/Test%20&%20Build/badge.svg)](https://github.com/pi-hole/docker-pi-hole/actions?query=workflow%3A%22Test+%26+Build%22) [![Docker Stars](https://img.shields.io/docker/stars/pihole/pihole.svg?maxAge=604800)](https://store.docker.com/community/images/pihole/pihole) [![Docker Pulls](https://img.shields.io/docker/pulls/pihole/pihole.svg?maxAge=604800)](https://store.docker.com/community/images/pihole/pihole)
 
 ## Running Pi-hole Docker
 
@@ -286,6 +306,7 @@ DNSMasq / [FTLDNS](https://docs.pi-hole.net/ftldns/in-depth/#linux-capabilities)
 - `CAP_NET_ADMIN`: modify routing tables and other network-related operations (in particular inserting an entry in the neighbor table to answer DHCP requests using unicast packets)
 - `CAP_SYS_NICE`: FTL sets itself as an important process to get some more processing time if the latter is running low
 - `CAP_CHOWN`: we need to be able to change ownership of log files and databases in case FTL is started as a different user than `pihole`
+- `CAP_SYS_PTRACE`: May be needed if Pi-hole status is reported incorrectly (see [#734](https://github.com/pi-hole/docker-pi-hole/issues/734))
 
 This image automatically grants those capabilities, if available, to the FTLDNS process, even when run as non-root.\
 By default, docker does not include the `NET_ADMIN` capability for non-privileged containers, and it is recommended to explicitly add it to the container using `--cap-add=NET_ADMIN`.\
