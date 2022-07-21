@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # If user has set QUERY_LOGGING Env Var, copy it out to _OVERRIDE,
-# else it will get overridden itself when we source basic-install.sh
+# else it will get overridden when we source bash_functions.sh
+# (which then sources basic-install.sh)
 [ -n "${QUERY_LOGGING}" ] && export QUERY_LOGGING_OVERRIDE="${QUERY_LOGGING}"
 
 # Legacy Env Vars preserved for backwards compatibility - convert them to FTLCONF_ equivalents
@@ -434,7 +435,7 @@ setup_web_password() {
     fi
 
     # Explicitly turn off bash printing when working with secrets
-    { set +x; } 2>/dev/null
+    #{ set +x; } 2>/dev/null
 
     if [[ "$WEBPASSWORD" == "" ]] ; then
         echo "" | pihole -a -p
