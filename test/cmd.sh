@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eux
 
-docker build ./src --tag pihole:${GIT_TAG} --no-cache
+docker build --tag pihole:${GIT_TAG} --no-cache src/
 docker images
 
 # auto-format the pytest code
