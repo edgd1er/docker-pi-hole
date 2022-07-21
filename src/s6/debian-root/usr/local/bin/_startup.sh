@@ -40,6 +40,7 @@ setup_web_php_env
 # ===========================
 setup_ipv4_ipv6
 setup_lighttpd_bind
+setup_light_certificate
 
 # Misc Setup
 # ===========================
