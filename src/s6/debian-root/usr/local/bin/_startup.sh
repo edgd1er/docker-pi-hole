@@ -12,6 +12,7 @@ fi
 SKIP_INSTALL=true . "${PIHOLE_INSTALL}"
 
 echo "  [i] Starting docker specific checks & setup for docker pihole/pihole"
+dpkg-reconfigure --frontend noninteractive tzdata
 
 # TODO:
 #if [ ! -f /.piholeFirstBoot ] ; then
@@ -40,6 +41,7 @@ setup_web_php_env
 # ===========================
 setup_ipv4_ipv6
 setup_lighttpd_bind
+setup_light_certificate
 
 # Misc Setup
 # ===========================
