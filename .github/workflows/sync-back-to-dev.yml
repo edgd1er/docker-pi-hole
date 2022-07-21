@@ -2,8 +2,8 @@ name: Sync Back to Development
 
 on:
   push:
-    branches:
-      - master
+    branches: []
+    #  - master
 
 jobs:
   sync-branches:

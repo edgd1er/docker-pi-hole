@@ -7,7 +7,7 @@ start() {
 }
 
 stop() {
-  /command/s6-svc -wD -d -T2500 /run/service/"$service"
+  /command/s6-svc -wD -d -T${S6_SVC_TIMEOUT} /run/service/"$service"
 }
 
 restart() {
@@ -33,7 +33,7 @@ restart() {
 
   # Only attempt to start the service if it is not already running
   if [ -z "$pid" ]; then
-    /command/s6-svc -wu -u -T2500 /run/service/"$service"
+    /command/s6-svc -wu -u -T${S6_SVC_TIMEOUT} /run/service/"$service"
   fi
 
 }
