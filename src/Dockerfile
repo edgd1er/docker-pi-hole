@@ -35,35 +35,18 @@ ENV S6_SVC_TIMEOUT=2500
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 #hadolint ignore=DL3008
 
-WORKDIR /usr/bin/
-
-COPY ./scripts/install.sh /usr/local/bin/install.sh
-COPY ./s6/debian-root /
-COPY ./s6/service /usr/local/bin/service
-
-# Add PADD to the container, too.
-ADD https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh /padd.sh
-#RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
-RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERSION} for ${TARGETPLATFORM}" \
-    && find /etc/s6-overlay -type f -exec chmod +x {} \; \
-    && bash -x /usr/local/bin/install.sh 2>&1 \
-    # S6_GLOBAL_PATH ha nos effect
-    # && mkdir -p /etc/s6-overlay/config/ && echo "${S6_GLOBAL_PATH}" > /etc/s6-overlay/config/global_path \
-    && sed -i "s#once quiet#once \>/var/log/pihole_flush.log#" /etc/cron.d/pihole \
-    && sed -i "s# \* \* 7# * * *#" /etc/cron.d/pihole \
-    && rm -rf /var/lib/apt/lists/* \
-    && chmod +x /padd.sh \
-    && sleep 1 \
-    && grep -P "(flush|update)" /etc/cron.d/pihole
-
 # php config start passes special ENVs into
 ARG PHP_ENV_CONFIG
 ENV PHP_ENV_CONFIG=/etc/lighttpd/conf-enabled/15-fastcgi-php.conf
 ARG PHP_ERROR_LOG
 ENV PHP_ERROR_LOG=/var/log/lighttpd/error-pihole.log
-COPY ./scripts/start.sh /
-COPY ./scripts/bash_functions.sh /
-COPY ./scripts/gravityonboot.sh /
+ENV FTLCONF_REPLY_ADDR4=0.0.0.0
+ENV FTL_CMD=no-daemon
+ENV DNSMASQ_USER=pihole
+ENV S6_LOGGING=0
+ENV S6_KEEP_ENV=1
+ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=1
+ENV PATH=/:/opt/pihole:${PATH}
 
 # IPv6 disable flag for networks/devices that do not support it
 ENV IPv6=True
@@ -72,17 +55,27 @@ EXPOSE 53 53/udp
 EXPOSE 67/udp
 EXPOSE 80
 
-ENV S6_LOGGING=0
-ENV S6_KEEP_ENV=1
-ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=1
-
-ENV FTLCONF_REPLY_ADDR4=0.0.0.0
-ENV FTL_CMD=no-daemon
-ENV DNSMASQ_USER=pihole
-
-ENV PATH=/:/opt/pihole:${PATH}
-
 HEALTHCHECK CMD dig +short +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 
-SHELL ["/bin/bash", "-c"]
+WORKDIR /usr/bin/
+COPY ./s6/debian-root /
+COPY ./s6/service /usr/local/bin/service
+COPY ./scripts/start.sh /
+COPY ./scripts/bash_functions.sh /
+COPY ./scripts/gravityonboot.sh /
+COPY ./scripts/install.sh /usr/local/bin/install.sh
+
+# Add PADD to the container, too.
+ADD https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh /padd.sh
+#RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
+RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERSION} for ${TARGETPLATFORM}" \
+    && find /etc/s6-overlay -type f -exec chmod +x {} \; \
+    && bash -x /usr/local/bin/install.sh 2>&1 \
+    && sed -i "s#once quiet#once \>/var/log/pihole/pihole_flush.log#" /etc/cron.d/pihole \
+    # && sed -i "s# \* \* 7# * * *#" /etc/cron.d/pihole \
+    && rm -rf /var/lib/apt/lists/* \
+    && chmod +x /padd.sh \
+    && sleep 1 \
+    && grep -P "(flush|update)" /etc/cron.d/pihole
+
 ENTRYPOINT [ "/init" ]
