@@ -98,7 +98,9 @@ def test_overrides_default_custom_cache_size(docker, slow, test_args, cache_size
     """Changes the cache_size setting to increase or decrease the cache size for dnsmasq"""
     CONFIG_LINE = r"cache-size\s*=\s*{}".format(cache_size)
 
-    function = docker.run('echo ${CUSTOM_CACHE_SIZE};. /usr/local/bin/bash_functions.sh; echo ${CUSTOM_CACHE_SIZE}; eval `grep setup_FTL_CacheSize /usr/local/bin/_startup.sh`')
+    function = docker.run(
+        "echo ${CUSTOM_CACHE_SIZE};. /usr/local/bin/bash_functions.sh; echo ${CUSTOM_CACHE_SIZE}; eval `grep setup_FTL_CacheSize /usr/local/bin/_startup.sh`"
+    )
     assert "Custom CUSTOM_CACHE_SIZE set to {}".format(cache_size) in function.stdout
     slow(
         lambda: re.search(CONFIG_LINE, docker.run(_cat(DNSMASQ_CONFIG_LOC)).stdout)

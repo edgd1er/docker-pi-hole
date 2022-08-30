@@ -1,5 +1,5 @@
 FROM python:3.10-slim-bullseye
-ARG DC_VERSION=2.6.1
+ARG DC_VERSION=2.10.2
 # Only works for docker CLIENT (bind mounted socket)
 COPY --from=docker:20.10.17 /usr/local/bin/docker /usr/local/bin/
 
