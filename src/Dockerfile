@@ -60,10 +60,6 @@ HEALTHCHECK CMD dig +short +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 WORKDIR /usr/bin/
 COPY ./s6/debian-root /
 COPY ./s6/service /usr/local/bin/service
-COPY ./scripts/start.sh /
-COPY ./scripts/bash_functions.sh /
-COPY ./scripts/gravityonboot.sh /
-COPY ./scripts/install.sh /usr/local/bin/install.sh
 
 # Add PADD to the container, too.
 ADD https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh /padd.sh
