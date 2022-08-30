@@ -10,7 +10,7 @@ GIT_TAG=$(git describe --tags --exact-match 2> /dev/null || true)
 GIT_TAG="${GIT_TAG:-$GIT_BRANCH}"
 
 # generate and build dockerfile
-docker build --build-arg DC_VERSION=2.6.1  --tag image_pipenv --file test/Dockerfile test/
+docker build --build-arg DC_VERSION=2.10.1  --tag image_pipenv --file test/Dockerfile test/
 docker run --rm \
     --volume /var/run/docker.sock:/var/run/docker.sock \
     --volume "$(pwd):/$(pwd)" \
