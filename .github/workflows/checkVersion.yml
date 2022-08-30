@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  S6VERSION: 3.1.2.0
+  S6VERSION: 3.1.2.1
 
 jobs:
   check-s6_version:
