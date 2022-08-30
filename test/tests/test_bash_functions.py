@@ -1,4 +1,3 @@
-
 import os
 import pytest
 import re
@@ -31,9 +30,9 @@ def test_ipv6_not_true_removes_ipv6(docker, slow, test_args, expected_ipv6, expe
     if expected_stdout == 'IPv4':
         assert 'IPv6' not in function.stdout
     # On overlay2(?) docker sometimes writes to disk are slow enough to break some tests...
-    expected_ipv6_check = lambda: (\
-        IPV6_LINE in docker.run('grep \'use-ipv6.pl\' {}'.format(WEB_CONFIG)).stdout
-    ) == expected_ipv6
+    expected_ipv6_check = lambda: ( \
+                                              IPV6_LINE in docker.run('grep \'use-ipv6.pl\' {}'.format(WEB_CONFIG)).stdout
+                                  ) == expected_ipv6
     slow(expected_ipv6_check)
 
 
@@ -64,7 +63,7 @@ def test_overrides_default_custom_cache_size(docker, slow, test_args, cache_size
     ''' Changes the cache_size setting to increase or decrease the cache size for dnsmasq'''
     CONFIG_LINE = r'cache-size\s*=\s*{}'.format(cache_size)
 
-    function = docker.run('echo ${CUSTOM_CACHE_SIZE};. ./usr/local/bin/bash_functions.sh; echo ${CUSTOM_CACHE_SIZE}; eval `grep setup_FTL_CacheSize /usr/local/bin/_startup.sh`')
+    function = docker.run('echo ${CUSTOM_CACHE_SIZE};. /usr/local/bin/bash_functions.sh; echo ${CUSTOM_CACHE_SIZE}; eval `grep setup_FTL_CacheSize /usr/local/bin/_startup.sh`')
     assert "Custom CUSTOM_CACHE_SIZE set to {}".format(cache_size) in function.stdout
     slow(lambda: re.search(CONFIG_LINE, docker.run(_cat(DNSMASQ_CONFIG_LOC)).stdout) != None)
 
