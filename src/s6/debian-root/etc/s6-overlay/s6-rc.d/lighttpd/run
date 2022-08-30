@@ -4,10 +4,6 @@ if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
     set -x ;
 fi
 
-if [ ${PH_VERBOSE:-0} -gt 0 ] ; then
-    set -x ;
-fi
-
 [[ ! -d /var/cache/lighttpd/uploads ]] && mkdir -p /var/cache/lighttpd/uploads || true
 
 #create if missing.
