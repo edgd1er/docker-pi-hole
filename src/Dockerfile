@@ -48,10 +48,6 @@ ENV S6_KEEP_ENV=1
 ENV S6_BEHAVIOUR_IF_STAGE2_FAILS=1
 ENV PATH=/:/opt/pihole:${PATH}
 
-# Add PADD to the container, too.
-ADD https://install.padd.sh /usr/local/bin/padd
-RUN chmod +x /usr/local/bin/padd
-
 # IPv6 disable flag for networks/devices that do not support it
 ENV IPv6=True
 
@@ -66,7 +62,8 @@ COPY ./s6/debian-root /
 COPY ./s6/service /usr/local/bin/service
 
 # Add PADD to the container, too.
-ADD https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh /padd.sh
+ADD https://install.padd.sh /usr/local/bin/padd
+
 #RUN --mount=type=cache,target=/var/cache/apt --mount=type=cache,target=/var/lib/apt \
 #hadolint ignore=SC2016
 RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERSION} for ${TARGETPLATFORM}" \
@@ -89,8 +86,14 @@ RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERS
     #&& sed -i -e '91{/ \} else {/d};' /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
     # allow components checks when in container.
     && sed -i -e 's/$docker_update = checkUpdate($docker_current, $docker_latest);/$core_update = checkUpdate($core_current, $core_latest);\n     $web_update = checkUpdate($web_current, $web_latest);\n    $FTL_update = checkUpdate($FTL_current, $FTL_latest);/' /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
+    # whatever is the branch, allow components update checks: update_checker.php
+    && sed -i -E "s/(nightly|dev)/useless/g"  /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
+    # remove docker update as latest is the only tag for this fork: footer.php
+    && sed -i '/<?php if ($docker_update) { ?>/,+1d' /var/www/html/admin/scripts/pi-hole/php/footer.php \
+    && sed -i 's/<?php } elseif ($core_update /<?php if ($core_update /' /var/www/html/admin/scripts/pi-hole/php/footer.php \
+    && sed -i 's/To install updates,.*/To install update, update the image./' /var/www/html/admin/scripts/pi-hole/php/footer.php \
     && rm -rf /var/lib/apt/lists/* \
-    && chmod +x /padd.sh /usr/local/bin/*.sh \
+    && chmod +x /usr/local/bin/padd /usr/local/bin/*.sh \
     && sleep 1 \
     && grep -P "(flush|update)" /etc/cron.d/pihole
 
