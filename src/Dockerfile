@@ -73,14 +73,22 @@ RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERS
     && find /etc/s6-overlay -type f -exec chmod +x {} \; \
     && bash -x /usr/local/bin/install.sh 2>&1 \
     && sed -i "s#once quiet#once \>/var/log/pihole/pihole_flush.log#" /etc/cron.d/pihole \
-    # allow components checks when in container.
-    && sed -i '/$docker_update = checkUpdate($docker_current,$docker_latest):/a \n   $core_update = checkUpdate($core_current, $core_latest);\n     $web_update = checkUpdate($web_current, $web_latest);\n    $FTL_update = checkUpdate($FTL_current, $FTL_latest); ' /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
     # && sed -i "s# \* \* 7# * * *#" /etc/cron.d/pihole \
     && echo '* * * * * root  PATH="$PATH:/usr/local/bin/" /bin/bash /usr/local/bin/_healthcheck.sh >>/proc/1/fd/1 2>&1' >>/etc/cron.d/pihole \
+    # check components versions daily
+    && echo '* 8 * * * root  PATH="$PATH:/usr/local/bin/" /bin/bash /opt/pihole/updatecheck.sh >>/proc/1/fd/1 2>&1' >>/etc/cron.d/pihole \
     # check ftl port exists
     && sed -i "s/\$portfileName != ''/\(\$portfileName != ''\) and file_exists\(\$portfileName\)/" /var/www/html/admin/scripts/pi-hole/php/FTL.php \
-    # use tag unstead of file
+    # use env var unstead of file
     && sed -i "s/^DOCKER_TAG=\$(cat .*/DOCKER_TAG=\${PIHOLE_DOCKER_TAG}/" /opt/pihole/updatecheck.sh \
+    # allow all docker tag
+    && sed -i 's/unset DOCKER_TAG/echo anyhow keeping tag/' /opt/pihole/updatecheck.sh \
+    # ignore docker check for latest
+    && sed -i "s/\$docker_current == 'dev' || \$docker_current == 'nightly'/true == false/" /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
+    # allow components check
+    #&& sed -i -e '91{/ \} else {/d};' /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
+    # allow components checks when in container.
+    && sed -i -e 's/$docker_update = checkUpdate($docker_current, $docker_latest);/$core_update = checkUpdate($core_current, $core_latest);\n     $web_update = checkUpdate($web_current, $web_latest);\n    $FTL_update = checkUpdate($FTL_current, $FTL_latest);/' /var/www/html/admin/scripts/pi-hole/php/update_checker.php \
     && rm -rf /var/lib/apt/lists/* \
     && chmod +x /padd.sh /usr/local/bin/*.sh \
     && sleep 1 \
