@@ -12,6 +12,7 @@ fi
 SKIP_INSTALL=true . /etc/.pihole/automated\ install/basic-install.sh
 
 echo "  [i] Starting docker specific checks & setup for docker pihole/pihole"
+dpkg-reconfigure --frontend noninteractive tzdata
 
 # TODO:
 #if [ ! -f /.piholeFirstBoot ] ; then
@@ -40,6 +41,9 @@ setup_web_php_env
 # ===========================
 setup_ipv4_ipv6
 setup_lighttpd_bind
+setup_light_certificate
+#Enable logs mod
+sed -i "s/access.log/access-pihole.log/" /etc/lighttpd/conf-available/10-accesslog.conf
 
 # Misc Setup
 # ===========================
