@@ -1,6 +1,10 @@
 #!/bin/bash -ex
 # shellcheck disable=SC2034
 
+if [ "${PH_VERBOSE:-0}" -gt 0 ]; then
+  set -x
+fi
+
 mkdir -p /etc/pihole/
 mkdir -p /var/run/pihole
 
@@ -14,22 +18,24 @@ detect_arch() {
   S6_ARCH=$DETECTED_ARCH
   case $DETECTED_ARCH in
   amd64)
-    S6_ARCH="x86_64";;
+    S6_ARCH="x86_64"
+    ;;
   armel)
     S6_ARCH="armhf";;
   armhf)
-    S6_ARCH="armhf";;
+    S6_ARCH="armhf"
+    ;;
   arm64)
-    S6_ARCH="aarch64";;
+    S6_ARCH="aarch64"
+    ;;
   i386)
-    S6_ARCH="i686";;
-esac
+    S6_ARCH="i686"
+    ;;
+  esac
 }
 
-
-DOCKER_TAG=$(cat /pihole.docker.tag)
 # Helps to have some additional tools in the dev image when debugging
-if [[ "${DOCKER_TAG}" = 'nightly' ||  "${DOCKER_TAG}" = 'dev' ]]; then
+if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly' || "${PIHOLE_DOCKER_TAG}" = 'dev' ]]; then
   apt-get update
   apt-get install --no-install-recommends -y nano less vim-tiny
   rm -rf /var/lib/apt/lists/*
@@ -37,10 +43,8 @@ fi
 
 detect_arch
 
-S6_OVERLAY_VERSION=v3.1.1.2
-
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jxpf - -C /
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jxpf - -C /
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jxpf - -C /
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jxpf - -C /
 
 # IMPORTANT: #########################################################################
 # Move /init somewhere else to prevent issues with podman/RHEL                       #
@@ -58,7 +62,7 @@ mv /init /s6-init                                                               
   echo "INSTALL_WEB_SERVER=true"
   echo "INSTALL_WEB_INTERFACE=true"
   echo "LIGHTTPD_ENABLED=true"
-}>> "${setupVars}"
+} >>"${setupVars}"
 source $setupVars
 
 export USER=pihole
@@ -69,7 +73,7 @@ export PIHOLE_SKIP_OS_CHECK=true
 curl -sSL https://install.pi-hole.net | bash -sex -- --unattended
 
 # At this stage, if we are building a :nightly tag, then switch the Pi-hole install to dev versions
-if [[ "${DOCKER_TAG}" = 'nightly'  ]]; then
+if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly' ]]; then
   yes | pihole checkout dev
 fi
 
