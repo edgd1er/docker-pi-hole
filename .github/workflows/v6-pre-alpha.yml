@@ -1,10 +1,11 @@
-name: Build & Publish
+name: Build & Publish v6
 on:
   schedule:
     - cron: '0 5 * * *'
   push:
     branches:
       - v6-pre-alpha
+  workflow_dispatch:
 
 jobs:
   build-and-publish:

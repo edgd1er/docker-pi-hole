@@ -102,6 +102,12 @@ rm /etc/lighttpd/conf-enabled/99-unconfigured.conf
 ## Remove the default lighttpd placeholder page for good measure
 rm /var/www/html/index.lighttpd.html
 
+#enable ssl mod ssl if needed (debian:bullseye)
+if [ -z "$(compgen -G /etc/lighttpd/conf-enabled/*-ssl.conf)" ]; then
+  apt-get update && apt-get install -y --no-install-recommends lighttpd-mod-openssl
+  lighty-enable-mod ssl
+fi
+
 if [ ! -f /.piholeFirstBoot ]; then
   touch /.piholeFirstBoot
 fi
