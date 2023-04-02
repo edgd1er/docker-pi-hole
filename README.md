@@ -13,7 +13,7 @@ Original pi-hole/docker-pi-hole stats:
 - use Docker buildx for multi arch build
 - lighttpd access and error logs are redirected to container stdout (loose old query search, though)
 - based on bullseye-slim, not on pihole-debian based, might have problem on [synology](https://github.com/pi-hole/docker-base-images/tree/master/debian-base)
-- upgrade S6_OVERLAY v3.1.4.0 as of 23/02/19.
+- upgrade S6_OVERLAY v3.1.4.1 as of 23/04/01.
 - add WEB_UID/WEB_GID=116, PIHOLE_UID, PIHOLE_GID for web-data and pihole user as host system may require specific id/gid.
 - add check services script to restart stopped services (occuring on slow/old rpi (Rpi 2))
 - enabled components version monitoring in index page.(footer)

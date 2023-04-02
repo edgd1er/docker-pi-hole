@@ -6,7 +6,7 @@ SHELL:=bash
 # Enable BuildKit for Docker build
 export DOCKER_BUILDKIT:=1
 export COMPOSE_DOCKER_CLI_BUILD:=1
-S6VER:=3.1.4.0
+S6VER:=3.1.4.1
 CACHER:=
 
 # https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html

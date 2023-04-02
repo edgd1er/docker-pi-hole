@@ -18,7 +18,7 @@ env:
   BUILD_NOCACHE: false
   DOCKER_PUSH: true
   DEBIAN_VERSION: bullseye-slim
-  S6_OVERLAY_VERSION: 3.1.4.0
+  S6_OVERLAY_VERSION: 3.1.4.1
   IMAGE: pihole
   PIHOLE_DOCKER_TAG: latest
   NAME: edgd1er/pihole
