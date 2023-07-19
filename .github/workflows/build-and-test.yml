@@ -1,6 +1,11 @@
 name: Build and Test (development-v6)
 on:
   pull_request:
+  push:
+    branches:
+      - development-v6
+  workflow_dispatch:
+
 
 jobs:
   test:
