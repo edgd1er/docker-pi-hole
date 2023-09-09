@@ -1,6 +1,7 @@
 import os
-import pytest
 import subprocess
+
+import pytest
 import testinfra
 
 local_host = testinfra.get_host("local://")

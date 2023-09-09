@@ -11,8 +11,11 @@ ARG PADD_BRANCH="PADD_FTLv6"
 
 ENV DNSMASQ_USER=pihole
 ENV FTL_CMD=no-daemon
+ENV TZ=Europe/Paris
+ENV FTLCONF_webserver_port=8080
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && apk add --no-cache \
+#RUN apk add --no-cache \
     bash \
     bind-tools \
     binutils \
@@ -41,19 +44,23 @@ ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/p
 
 # download a the main repos from github
 RUN git clone --depth 1 --single-branch --branch ${WEB_BRANCH} https://github.com/pi-hole/AdminLTE.git /var/www/html/admin && \
-    git clone --depth 1 --single-branch --branch ${CORE_BRANCH} https://github.com/pi-hole/pi-hole.git /etc/.pihole ;\
+    git clone --depth 1 --single-branch --branch ${CORE_BRANCH} https://github.com/pi-hole/pi-hole.git /etc/.pihole && \
+    #fix php pages still present
+    find /var/www/html/admin/ -type f -exec grep -H "\.php" {} \; && \
+    find /var/www/html/admin/ -type f -exec sed -iE "s/\.php//g" {} \; && \
     # Download the latest version of pihole-FTL for alpine:
-    if   [ "$TARGETPLATFORM" = "linux/amd64" ];    then FTLARCH=amd64; \
-    elif [ "$TARGETPLATFORM" = "linux/386" ];      then FTLARCH=386; \
-    elif [ "$TARGETPLATFORM" = "linux/arm/v6" ];   then FTLARCH=armv6; \
-    elif [ "$TARGETPLATFORM" = "linux/arm/v7" ];   then FTLARCH=armv7; \
-    elif [ "$TARGETPLATFORM" = "linux/arm64" ];    then FTLARCH=arm64; \
-    elif [ "$TARGETPLATFORM" = "linux/riscv64" ];  then FTLARCH=riscv64; \
-    else FTLARCH=amd64; fi \
-    && echo "Arch: ${TARGETPLATFORM}, FTLARCH: ${FTLARCH}" \
-    && curl -sSL "https://ftl.pi-hole.net/${FTL_BRANCH}/pihole-FTL-${FTLARCH}" -o /usr/bin/pihole-FTL \
-    && chmod +x /usr/bin/pihole-FTL \
-    && readelf -h /usr/bin/pihole-FTL || cat /usr/bin/pihole-FTL
+    if [ "$TARGETPLATFORM" = "linux/amd64" ]; then FTLARCH=amd64; \
+    elif [ "$TARGETPLATFORM" = "linux/386" ]; then FTLARCH=386; \
+    elif [ "$TARGETPLATFORM" = "linux/arm/v6" ]; then FTLARCH=armv6; \
+    elif [ "$TARGETPLATFORM" = "linux/arm/v7" ]; then FTLARCH=armv7; \
+    elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then FTLARCH=arm64; \
+    elif [ "$TARGETPLATFORM" = "linux/riscv64" ]; then FTLARCH=riscv64; \
+    else FTLARCH=amd64; fi && \
+    echo "Arch: ${TARGETPLATFORM}, FTLARCH: ${FTLARCH}" && \
+    curl -sSL "https://ftl.pi-hole.net/${FTL_BRANCH}/pihole-FTL-${FTLARCH}" -o /usr/bin/pihole-FTL && \
+    chmod +x /usr/bin/pihole-FTL && \
+    readelf -h /usr/bin/pihole-FTL || cat /usr/bin/pihole-FTL
+
 
 RUN cd /etc/.pihole && \
     install -Dm755 -d /opt/pihole && \
@@ -65,11 +72,22 @@ RUN cd /etc/.pihole && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-prestart.sh /opt/pihole/pihole-FTL-prestart.sh && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-poststop.sh /opt/pihole/pihole-FTL-poststop.sh && \
     addgroup -S pihole && adduser -S pihole -G pihole && \
-    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag
+    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag && \
+    sed -i 's/# "${PIHOLE_COMMAND}" status/"${PIHOLE_COMMAND}" status/' /opt/pihole/gravity.sh && \
+    echo -e "alias padd='port=\${FTLCONF_webserver_port%%,*} padd --port \${port:-8080}  --secret \${FTLCONF_webserver_api_password}'" >>/root/.bashrc && \
+    echo -e "alias modalias='vi /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias salias='source /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias ll='ls -alh'" >>/root/.bashrc
 
+
+# Add PADD to the container, too.
+ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
+# ADD macvendor
+ADD --chown=user:pihole --chmod=555 https://ftl.pi-hole.net/macvendor.db /macvendor.db
+COPY --chmod=0640 crontab.txt /crontab.txt
 COPY --chmod=0755 bash_functions.sh /usr/bin/bash_functions.sh
 COPY --chmod=0755 start.sh /usr/bin/start.sh
 
 HEALTHCHECK CMD dig +short +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 
-ENTRYPOINT ["/sbin/tini", "--", "start.sh"]
+ENTRYPOINT [ "/sbin/tini", "--", "/usr/bin/start.sh" ]
