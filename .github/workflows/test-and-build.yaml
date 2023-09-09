@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Run Tests
         run: |
           echo "Building ${{ env.ARCH }}-${{ env.DEBIAN_VERSION }}"
@@ -44,10 +44,10 @@ jobs:
     steps:
       - name: Checkout
         if: github.event_name != 'schedule'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Checkout dev branch if we are building nightly
         if: github.event_name == 'schedule'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: dev
       - name: set github ref
