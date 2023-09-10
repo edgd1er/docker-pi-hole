@@ -12,7 +12,7 @@ on:
 
 env:
   dockerhub: ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
-  ghcr: ghcr.io/${{ github.repository_owner }}/pihole
+  #ghcr: ghcr.io/${{ github.repository_owner }}/pihole
 
 jobs:
   build-and-test:
@@ -20,16 +20,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        registry: [dockerhub, ghcr]
-        platform: [linux/amd64, linux/386, linux/arm/v6, linux/arm/v7, linux/arm64/v8]
+        registry: [dockerhub] #, ghcr]
+        platform: [linux/amd64, linux/386, linux/arm/v6, linux/arm/v7, linux/arm64]
         container: [3.18]
         include:
           - registry: dockerhub
             platform: linux/riscv64
             container: edge
-          - registry: ghcr
-            platform: linux/riscv64
-            container: edge
+          #- registry: ghcr
+          #  platform: linux/riscv64
+          #  container: edge
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -50,12 +50,13 @@ jobs:
 
       - name: Login to DockerHub and GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: ./.github/actions/login-repo
+        #uses: ./.github/actions/login-repo
+        uses: docker/login-action@v2
         with:
-          docker_username: ${{ secrets.DOCKERHUB_USER }}
-          docker_password: ${{ secrets.DOCKERHUB_PASS }}
-          ghcr_username: ${{ github.repository_owner }}
-          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          #ghcr_username: ${{ github.repository_owner }}
+          #ghcr_password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -99,7 +100,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        registry: [dockerhub, ghcr]
+        registry: [dockerhub ] #, ghcr]
     runs-on: ubuntu-latest
     needs:
       - build-and-test
