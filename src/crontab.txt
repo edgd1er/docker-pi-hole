@@ -1,3 +1,13 @@
-59 1  * * 6 PATH="$PATH:/usr/sbin:/usr/local/bin/" pihole updateGravity >/var/log/pihole/pihole_updateGravity.log || cat /var/log/pihole/pihole_updateGravity.log
-00 00 * * * PATH="$PATH:/usr/sbin:/usr/local/bin/" pihole flush once quiet
+MAXDAYS=30
+#Update gravity on saturday 1:59
+59 1  * * 6 PATH="$PATH:/usr/sbin:/usr/local/bin/" pihole updateGravity >/var/log/pihole/pihole_updateGravity.log 2>&1 || cat /var/log/pihole/pihole_updateGravit
+y.log
+# flush logs
+00 00 * * * PATH="$PATH:/usr/sbin:/usr/local/bin/" pihole flush once >/var/log/pihole/pihole_flush.log 2>&1
+# Pi-hole: Grab remote and local version every 24 hours
 59 17 * * * PATH="$PATH:/usr/sbin:/usr/local/bin/" pihole updatechecker
+
+#clean /var/log
+@weekly find /var/log/ -type f -mtime +${MAXDAYS} -delete
+
+#* * * * * root  PATH="$PATH:/usr/local/bin/" /bin/bash /usr/local/bin/_healthcheck.sh >>/proc/1/fd/1 2>&1
