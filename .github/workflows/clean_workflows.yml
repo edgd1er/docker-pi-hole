@@ -1,0 +1,75 @@
+name: Clean workflows
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+    inputs:
+      dry:
+        required: true
+        type: choice
+        default: false
+        options:
+          - true
+          - false
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - master
+      - development
+      - dev_origin
+  pull_request:
+    branches:
+      - master
+      - development
+      - dev_origin
+      -
+      # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  clean:
+    #strategy:
+    #  matrix:
+    #    branch:
+    #      - master
+    #      - dev
+    #      - s6v3
+    #      - dev_origin
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    env:
+      DRY: false
+    steps:
+      - name: Delete failed workflow runs dmvict
+        uses: dmvict/clean-workflow-runs@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          run_conclusions: |
+            action_required
+            cancelled
+            failure
+            neutral
+            skipped
+            stale
+            timed_out
+          save_period: 1
+          save_min_runs_number: 0
+          #branch: ${{ matrix.branch }}
+          dry: ${{ github.event.inputs.dry || env.DRY }}
+
+      - name: Delete workflow runs dmvict
+        uses: dmvict/clean-workflow-runs@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          save_period: 30
+          save_min_runs_number: 5
+          #branch: ${{ matrix.branch }}
+          dry: ${{ github.event.inputs.dry || env.DRY }}
+
+      - name: Delete workflow runs mattracks
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          retain_days: 30
+          keep_minimum_runs: 1
