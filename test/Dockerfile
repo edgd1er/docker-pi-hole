@@ -1,6 +1,7 @@
-ARG alpine_version="3.20"
-ARG docker_version="27.1.1"
+ARG alpine_version="3.21"
+ARG docker_version="27.5.1"
 
+#FROM docker:27.5.1-alpine3.21
 FROM docker:${docker_version}-cli-alpine${alpine_version}
 
 COPY --chmod=0755 ./cmd.sh /usr/local/bin/cmd.sh
