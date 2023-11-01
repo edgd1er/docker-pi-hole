@@ -5,6 +5,7 @@ on:
 jobs:
     housekeeping:
         runs-on: ubuntu-latest
+        if: false
         steps:
             -
                 name: Set up Docker Buildx
