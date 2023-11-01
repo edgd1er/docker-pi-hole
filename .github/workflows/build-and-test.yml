@@ -1,6 +1,11 @@
 name: Build Image and Test
 on:
   pull_request:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+
 
 jobs:
   test:
