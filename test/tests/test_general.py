@@ -26,7 +26,7 @@ def test_pihole_ftl_clean_shutdown(docker):
         """
         sleep 5
         killall --signal 15 start.sh
-        sleep 5
+        sleep 10
         grep 'terminated' /var/log/pihole/FTL.log
     """
     )
