@@ -16,3 +16,9 @@ var-log/
 
 # WIP/test stuff
 doco.yml
+
+.idea/
+
+logs/
+
+*.iml
