@@ -40,6 +40,10 @@ start() {
     echo "  [i] Starting FTL configuration"
     ftl_config
   fi
+  chown -R ${PIHOLE_UID:-100}:${PIHOLE_GID:-100} /etc/pihole/
+  chown -R ${PIHOLE_UID:-100}:${PIHOLE_GID:-100} /var/log/pihole/
+  #useless
+  sed -i "s/service pihole-FTL restart/true/g" /usr/local/bin/pihole
 
   # Install additional packages inside the container if requested
   install_additional_packages
@@ -92,15 +96,17 @@ stop() {
 
   # Wait for pihole-FTL to exit
   while test -d /proc/"${ftl_pid}"; do
+    echo "pihole-ftp still up: ${ftl_pid}: $(test -d /proc/${ftl_pid})"
     sleep 0.5
   done
 
+  echo "INFO: ########## FTL terminated after $(uptime)"
+
   # If we are running pytest, keep the container alive for a little longer
   # to allow the tests to complete
-  if [[ ${PYTEST} ]]; then
+  if [[ -n ${PYTEST} ]]; then
     sleep 10
   fi
-
   exit
 }
 
