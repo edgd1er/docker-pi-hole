@@ -42,7 +42,7 @@ ensure_basic_configuration() {
 
 
     if [[ -z "${PYTEST}" ]]; then
-        if [[ ! -f /etc/pihole/adlists.list ]]; then
+        if [ ! -f /etc/pihole/adlists.list ] && [ -z ${PHTEST_NOADLIST} ]; then
             echo "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts" >/etc/pihole/adlists.list
         fi
     fi
@@ -62,6 +62,14 @@ ensure_basic_configuration() {
     install -Dm644 -t /etc/pihole /etc/.pihole/advanced/Templates/logrotate
 }
 
+load_web_password_secret() {
+   # If WEBPASSWORD is not set at all, attempt to read password from WEBPASSWORD_FILE,
+   # allowing secrets to be passed via docker secrets
+   if [ -z "${FTLCONF_webserver_api_password+x}" ] && [ -n "${FTLCONF_webserver_api_password_file}" ] && [ -r "${FTLCONF_webserver_api_password_file}" ]; then
+     FTLCONF_webserver_api_password=$(<"${FTLCONF_webserver_api_password_file}")
+   fi;
+}
+
 setup_web_password() {
     echo "  [i] Checking web password"
     # If the web password variable is not set...
@@ -71,6 +79,8 @@ setup_web_password() {
             echo "  [i] No password supplied via FTLCONF_webserver_api_password, but FTLCONF_ENV_ONLY is set to true, using default (none)"
             # If so, return - the password will be set to FTL's default (no password)
             return
+        else
+            load_web_password_secret
         fi
 
         # Exit if password is already set in config file
@@ -95,6 +105,12 @@ setup_web_password() {
         fi
     else
         echo "  [i] Assigning password defined by Environment Variable"
+    fi
+
+    # To avoid printing this if conditional in bash debug, turn off  debug above..
+    # then re-enable debug if necessary (more code but cleaner printed output)
+    if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
+        set -x
     fi
 }
 
