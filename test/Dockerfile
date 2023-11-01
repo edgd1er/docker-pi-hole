@@ -1,4 +1,4 @@
-FROM docker:24.0.4-cli-alpine3.18
+FROM docker:24.0.7-cli-alpine3.18
 
 COPY --chmod=0755 ./cmd.sh /usr/local/bin/cmd.sh
 COPY --chmod=0755 ./entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -10,6 +10,7 @@ RUN apk add --no-cache \
     py3-pip \
     curl \
     && pip3 install --no-cache-dir -U pip pipenv \
+    && pipenv install --deploy \
     && pipenv install --system \
     # Not 100% sure what this line does, but it's always been in the Dockerfile (aside from pointing at a different file)
     # Tests fall over without it. Investigate later.
