@@ -34,7 +34,7 @@ version: "3"
 services:
   pihole:
     container_name: pihole
-    image: pihole/pihole:latest    
+    image: pihole/pihole:development-v6
     ports:
       # DNS Ports
       - "53:53/tcp"

@@ -7,7 +7,6 @@ fi
 trap stop TERM INT QUIT HUP ERR
 
 start() {
-
   # The below functions are all contained in bash_functions.sh
   # shellcheck source=/dev/null
   . /usr/bin/bash_functions.sh
@@ -39,6 +38,8 @@ start() {
       echo "  [i] ID for group pihole is already ${PIHOLE_GID}, no need to change"
     fi
   fi
+  chown -R ${PIHOLE_UID:-100}:${PIHOLE_GID:-100} /etc/pihole/
+  chown -R ${PIHOLE_UID:-100}:${PIHOLE_GID:-100} /var/log/pihole/
 
   ensure_basic_configuration
 
@@ -63,16 +64,22 @@ start() {
 
   # Start crond for scheduled scripts (logrotate, pihole flush, gravity update etc)
   # Randomize gravity update time
-  sed -i "s/59 1 /$((1 + RANDOM % 58)) $((3 + RANDOM % 2))/" /crontab.txt
+  sed -i "s/59 1 /$((1 + RANDOM % 58)) $((3 + RANDOM % 1))/" /crontab.txt
   # Randomize update checker time
   sed -i "s/59 17/$((1 + RANDOM % 58)) $((12 + RANDOM % 8))/" /crontab.txt
+  # remove log file after MAXDAYS
+  sed -i -E "s/MAXDAYS=.*/MAXDAYS=${MAXDAYS:-60}/" /crontab.txt
+  #load crontab
   /usr/bin/crontab /crontab.txt
+  #start daemon
+  /usr/sbin/crond -d0 -l1 2>&1
 
-  /usr/sbin/crond
+  echo "  [i] crontab jobs"
+  crontab -l
+  echo ""
 
   #migrate Database if needed:
   gravityDBfile=$(getFTLConfigValue files.gravity)
-
   if [ ! -f "${gravityDBfile}" ]; then
     echo "  [i] ${gravityDBfile} does not exist (Likely due to a fresh volume). This is a required file for Pi-hole to operate."
     pihole -g
@@ -84,6 +91,20 @@ start() {
 
   pihole updatechecker
 
+  #create self signed certificate
+  FTLCONF_webserver_tls_cert=${FTLCONF_webserver_tls_cert:-"/etc/pihole/tls.pem"}
+  export FTLCONF_webserver_tls_cert
+  # https defined but no cert found, generating one.
+  if [[ ! -f ${FTLCONF_webserver_tls_cert} ]] && [[ ${FTLCONF_webserver_port} =~ .*s.* ]]; then
+    echo "  [i] ${FTLCONF_webserver_tls_cert} not found, generating a certfile with pihole-FTL"
+    pihole-FTL --gen-x509 ${FTLCONF_webserver_tls_cert}
+  else
+    echo -e "  [i] certificate file found.\n"
+  fi
+
+  #create backup dir if needed
+  [[ ! -d /etc/pihole/config_backups ]] && mkdir -p /etc/pihole/config_backups || true
+
   echo "  [i] Docker start setup complete"
   echo ""
 
@@ -91,12 +112,14 @@ start() {
   echo ""
 
   # Start pihole-FTL
-
   fix_capabilities
   sh /opt/pihole/pihole-FTL-prestart.sh
   capsh --user=$DNSMASQ_USER --keep=1 -- -c "/usr/bin/pihole-FTL $FTL_CMD >/dev/null" &
 
-  if [ "${TAIL_FTL_LOG:-1}" -eq 1 ]; then
+  # Start pihole-FTL using the service-wrapper at /usr/local/bin/service
+  #service pihole-FTL start
+
+  if [ "${TAIL_FTL_LOG:-1}" -eq "1" ]; then
     tail -f /var/log/pihole/FTL.log &
   else
     echo "  [i] FTL log output is disabled. Remove the Environment variable TAIL_FTL_LOG, or set it to 1 to enable FTL log output."
@@ -108,7 +131,6 @@ start() {
   # - DNSMASQ_USER default of pihole is in Dockerfile & can be overwritten by runtime container env
   # - /var/log/pihole/pihole*.log has FTL's output that no-daemon would normally print in FG too
   #   prevent duplicating it in docker logs by sending to dev null
-
 }
 
 stop() {
@@ -118,15 +140,17 @@ stop() {
 
   # Wait for pihole-FTL to exit
   while test -d /proc/"${ftl_pid}"; do
+    echo "pihole-ftp still up: ${ftl_pid}: $(test -d /proc/${ftl_pid})"
     sleep 0.5
   done
 
+  echo "INFO: ########## FTL terminated after $(uptime)"
+
   # If we are running pytest, keep the container alive for a little longer
   # to allow the tests to complete
-  if [[ ${PYTEST} ]]; then
+  if [[ -n ${PYTEST} ]]; then
     sleep 10
   fi
-
   exit
 }
 
