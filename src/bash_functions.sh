@@ -12,7 +12,7 @@
 # Example getFTLConfigValue dns.piholePTR
 #######################
 getFTLConfigValue() {
-    pihole-FTL --config -q "${1}"
+  pihole-FTL --config -q "${1}"
 }
 
 #######################
@@ -25,7 +25,7 @@ getFTLConfigValue() {
 # setFTLConfigValue dns.upstreams '[ "8.8.8.8" , "8.8.4.4" ]'
 #######################
 setFTLConfigValue() {
-    pihole-FTL --config "${1}" "${2}" >/dev/null
+  pihole-FTL --config "${1}" "${2}" >/dev/null
 }
 
 set_uid_gid() {
@@ -144,7 +144,7 @@ ftl_config() {
         setFTLConfigValue "dns.upstreams" "[\"8.8.8.8\", \"8.8.4.4\"]"
     fi
 
-    setup_web_password
+setup_web_password
 }
 
 migrate_dnsmasq_d_contents() {
@@ -183,61 +183,56 @@ setup_web_password() {
             RANDOMPASSWORD=$(tr -dc _A-Z-a-z-0-9 </dev/urandom | head -c 8)
             echo "  [i] No password set in environment or config file, assigning random password: $RANDOMPASSWORD"
 
-            # Explicitly turn off bash printing when working with secrets
-            { set +x; } 2>/dev/null
-
-            pihole-FTL --config webserver.api.password "$RANDOMPASSWORD" >/dev/null
-
-            # To avoid printing this if conditional in bash debug, turn off  debug above..
-            # then re-enable debug if necessary (more code but cleaner printed output)
-            if [ "${PH_VERBOSE:-0}" -gt 0 ]; then
-                set -x
-            fi
-        fi
-    else
-        echo "  [i] Assigning password defined by Environment Variable"
+      # To avoid printing this if conditional in bash debug, turn off  debug above..
+      # then re-enable debug if necessary (more code but cleaner printed output)
+      if [ "${PH_VERBOSE:-0}" -gt 0 ]; then
+        set -x
+      fi
     fi
+  else
+    echo "  [i] Assigning password defined by Environment Variable"
+  fi
 }
 
 fix_capabilities() {
-    # Testing on Docker 20.10.14 with no caps set shows the following caps available to the container:
-    # Current: cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap=ep
-    # FTL can also use CAP_NET_ADMIN and CAP_SYS_NICE. If we try to set them when they haven't been explicitly enabled, FTL will not start. Test for them first:
-    echo "  [i] Setting capabilities on pihole-FTL where possible"
-    capsh --has-p=cap_chown 2>/dev/null && CAP_STR+=',CAP_CHOWN'
-    capsh --has-p=cap_net_bind_service 2>/dev/null && CAP_STR+=',CAP_NET_BIND_SERVICE'
-    capsh --has-p=cap_net_raw 2>/dev/null && CAP_STR+=',CAP_NET_RAW'
-    capsh --has-p=cap_net_admin 2>/dev/null && CAP_STR+=',CAP_NET_ADMIN' || DHCP_READY='false'
-    capsh --has-p=cap_sys_nice 2>/dev/null && CAP_STR+=',CAP_SYS_NICE'
-    capsh --has-p=cap_sys_time 2>/dev/null && CAP_STR+=',CAP_SYS_TIME'
+  # Testing on Docker 20.10.14 with no caps set shows the following caps available to the container:
+  # Current: cap_chown,cap_dac_override,cap_fowner,cap_fsetid,cap_kill,cap_setgid,cap_setuid,cap_setpcap,cap_net_bind_service,cap_net_raw,cap_sys_chroot,cap_mknod,cap_audit_write,cap_setfcap=ep
+  # FTL can also use CAP_NET_ADMIN and CAP_SYS_NICE. If we try to set them when they haven't been explicitly enabled, FTL will not start. Test for them first:
+  echo "  [i] Setting capabilities on pihole-FTL where possible"
+  capsh --has-p=cap_chown 2>/dev/null && CAP_STR+=',CAP_CHOWN'
+  capsh --has-p=cap_net_bind_service 2>/dev/null && CAP_STR+=',CAP_NET_BIND_SERVICE'
+  capsh --has-p=cap_net_raw 2>/dev/null && CAP_STR+=',CAP_NET_RAW'
+  capsh --has-p=cap_net_admin 2>/dev/null && CAP_STR+=',CAP_NET_ADMIN' || DHCP_READY='false'
+  capsh --has-p=cap_sys_nice 2>/dev/null && CAP_STR+=',CAP_SYS_NICE'
+  capsh --has-p=cap_sys_time 2>/dev/null && CAP_STR+=',CAP_SYS_TIME'
 
-    if [[ ${CAP_STR} ]]; then
-        # We have the (some of) the above caps available to us - apply them to pihole-FTL
-        echo "  [i] Applying the following caps to pihole-FTL:"
-        IFS=',' read -ra CAPS <<<"${CAP_STR:1}"
-        for i in "${CAPS[@]}"; do
-            echo "        * ${i}"
-        done
+  if [[ ${CAP_STR} ]]; then
+    # We have the (some of) the above caps available to us - apply them to pihole-FTL
+    echo "  [i] Applying the following caps to pihole-FTL:"
+    IFS=',' read -ra CAPS <<<"${CAP_STR:1}"
+    for i in "${CAPS[@]}"; do
+      echo "        * ${i}"
+    done
 
-        setcap ${CAP_STR:1}+ep "$(which pihole-FTL)" || ret=$?
+    setcap ${CAP_STR:1}+ep "$(which pihole-FTL)" || ret=$?
 
-        if [[ $DHCP_READY == false ]] && [[ $FTLCONF_dhcp_active == true ]]; then
-            # DHCP is requested but NET_ADMIN is not available.
-            echo "ERROR: DHCP requested but NET_ADMIN is not available. DHCP will not be started."
-            echo "      Please add cap_net_admin to the container's capabilities or disable DHCP."
-            DHCP_ACTIVE='false'
-            setFTLConfigValue dhcp.active false
-        fi
-
-        if [[ $ret -ne 0 && "${DNSMASQ_USER:-pihole}" != "root" ]]; then
-            echo "  [!] ERROR: Unable to set capabilities for pihole-FTL. Cannot run as non-root."
-            echo "            If you are seeing this error, please set the environment variable 'DNSMASQ_USER' to the value 'root'"
-            exit 1
-        fi
-    else
-        echo "  [!] WARNING: Unable to set capabilities for pihole-FTL."
-        echo "              Please ensure that the container has the required capabilities."
-        exit 1
+    if [[ $DHCP_READY == false ]] && [[ $FTLCONF_dhcp_active == true ]]; then
+      # DHCP is requested but NET_ADMIN is not available.
+      echo "ERROR: DHCP requested but NET_ADMIN is not available. DHCP will not be started."
+      echo "      Please add cap_net_admin to the container's capabilities or disable DHCP."
+      DHCP_ACTIVE='false'
+      setFTLConfigValue dhcp.active false
     fi
-    echo ""
+
+    if [[ $ret -ne 0 && "${DNSMASQ_USER:-pihole}" != "root" ]]; then
+      echo "  [!] ERROR: Unable to set capabilities for pihole-FTL. Cannot run as non-root."
+      echo "            If you are seeing this error, please set the environment variable 'DNSMASQ_USER' to the value 'root'"
+      exit 1
+    fi
+  else
+    echo "  [!] WARNING: Unable to set capabilities for pihole-FTL."
+    echo "              Please ensure that the container has the required capabilities."
+    exit 1
+  fi
+  echo ""
 }
