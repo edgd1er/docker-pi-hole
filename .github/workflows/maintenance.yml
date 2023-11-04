@@ -24,7 +24,7 @@ jobs:
           - 'docker-pi-hole-base'
     steps:
       - name: Clone repository 🔽
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Run deletion script 🗑
         run: ./delete_ghcr_dangling_images.sh ${{ matrix.container }}
