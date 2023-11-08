@@ -22,7 +22,7 @@ ENV PIHOLE_DOCKER_TAG="${PIHOLE_DOCKER_TAG}"
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 
-ARG S6_OVERLAY_VERSION=3.1.5.0
+ARG S6_OVERLAY_VERSION=3.1.6.0
 
 #ENV S6_VERBOSITY=3
 ENV S6_CMD_WAIT_FOR_SERVICES_MAXTIME=30000
@@ -70,7 +70,7 @@ RUN echo "Buidling pihole version ${PIHOLE_DOCKER_TAG} with s6 ${S6_OVERLAY_VERS
     # _startup runs installCron at boot time: so changing templates.
     && sed -i "s#once quiet#once \>/var/log/pihole/pihole_flush.log#" /etc/.pihole/advanced/Templates/pihole.cron \
     && echo '* * * * * root  PATH="$PATH:/usr/local/bin/" /bin/bash /usr/local/bin/_healthcheck.sh >>/proc/1/fd/1 2>&1' >>/etc/.pihole/advanced/Templates/pihole.cron \
-    && echo '5 2 * * * root  PATH="$PATH:/usr/local/bin/" logrotate -f /etc/logrotate.conf >>/proc/1/fd/1 2>&1' >>/etc/.pihole/advanced/Templates/pihole.cron \
+    && echo '5 2 * * * root  PATH="$PATH:/usr/local/bin/" /usr/sbin/logrotate -f /etc/logrotate.conf >>/proc/1/fd/1 2>&1' >>/etc/.pihole/advanced/Templates/pihole.cron \
     # check components versions daily
     #&& echo '* 8 * * * root  PATH="$PATH:/usr/local/bin/" /bin/bash /opt/pihole/updatecheck.sh >>/proc/1/fd/1 2>&1' >>/etc/.pihole/advanced/Templates/pihole.cron \
     # use env var unstead of file
