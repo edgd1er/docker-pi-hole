@@ -1,8 +1,11 @@
 #!/bin/bash -ex
 # shellcheck disable=SC2034
 
-mkdir -p /etc/pihole/
-mkdir -p /var/run/pihole
+if [ "${PH_VERBOSE:-0}" -gt 0 ]; then
+  set -x
+fi
+
+mkdir -p /etc/pihole/ -p /var/run/pihole -p /var/log/pihole -p /var/cache/lighttpd/uploads
 
 CORE_LOCAL_REPO=/etc/.pihole
 WEB_LOCAL_REPO=/var/www/html/admin
@@ -28,27 +31,14 @@ detect_arch() {
   esac
 }
 
-
-DOCKER_TAG=$(cat /pihole.docker.tag)
 # Helps to have some additional tools in the dev image when debugging
-if [[ "${DOCKER_TAG}" = 'nightly' ||  "${DOCKER_TAG}" = 'dev' ]]; then
+if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly' || "${PIHOLE_DOCKER_TAG}" = 'dev' ]]; then
   apt-get update
   apt-get install --no-install-recommends -y nano less vim-tiny
   rm -rf /var/lib/apt/lists/*
 fi
 
 detect_arch
-
-S6_OVERLAY_VERSION=v3.1.1.2
-
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jxpf - -C /
-curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jxpf - -C /
-
-# IMPORTANT: #########################################################################
-# Move /init somewhere else to prevent issues with podman/RHEL                       #
-# See: https://github.com/pi-hole/docker-pi-hole/issues/1176#issuecomment-1227587045 #
-mv /init /s6-init                                                                    #
-######################################################################################
 
 # Preseed variables to assist with using --unattended install
 {
@@ -60,7 +50,7 @@ mv /init /s6-init                                                               
   echo "INSTALL_WEB_SERVER=true"
   echo "INSTALL_WEB_INTERFACE=true"
   echo "LIGHTTPD_ENABLED=true"
-}>> "${setupVars}"
+} >>"${setupVars}"
 source $setupVars
 
 export USER=pihole
@@ -70,8 +60,9 @@ export PIHOLE_SKIP_OS_CHECK=true
 # Run the installer in unattended mode using the preseeded variables above and --reconfigure so that local repos are not updated
 curl -sSL https://install.pi-hole.net | bash -sex -- --unattended
 
+
 # At this stage, if we are building a :nightly tag, then switch the Pi-hole install to dev versions
-if [[ "${DOCKER_TAG}" = 'nightly'  ]]; then
+if [[ "${PIHOLE_DOCKER_TAG}" = 'nightly' ]]; then
   yes | pihole checkout dev
 fi
 
@@ -106,7 +97,22 @@ fi
 ## Remove redundant directories created by the installer to reduce docker image size
 rm -rf /tmp/*
 
+#enable ssl mod ssl if needed (debian:bullseye)
+if [ -z "$(compgen -G /etc/lighttpd/conf-enabled/*-ssl.conf)" ]; then
+  apt-get update && apt-get install -y --no-install-recommends lighttpd-mod-openssl
+  lighty-enable-mod ssl
+fi
+
 if [ ! -f /.piholeFirstBoot ]; then
   touch /.piholeFirstBoot
 fi
 echo 'Docker install successful'
+
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz" | tar Jvxpf - -C /
+curl -L -s "https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_ARCH}.tar.xz" | tar Jvxpf - -C /
+
+# IMPORTANT: #########################################################################
+# Move /init somewhere else to prevent issues with podman/RHEL                       #
+# See: https://github.com/pi-hole/docker-pi-hole/issues/1176#issuecomment-1227587045 #
+mv /init /s6-init                                                                    #
+######################################################################################
