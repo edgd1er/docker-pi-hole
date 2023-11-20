@@ -1,5 +1,7 @@
 #!/command/with-contenv bash
 
+s6-echo "Starting pihole-FTL ($FTL_CMD) as ${DNSMASQ_USER}"
+
 if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
     set -x ;
 fi

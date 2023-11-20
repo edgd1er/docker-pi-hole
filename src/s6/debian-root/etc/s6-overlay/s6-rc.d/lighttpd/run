@@ -4,6 +4,13 @@ if [ "${PH_VERBOSE:-0}" -gt 0 ] ; then
     set -x ;
 fi
 
+chown -R www-data:www-data /var/cache/lighttpd /run/lighttpd
+chmod -R 755 /var/cache/lighttpd /run/lighttpd
+
+#create if missing.
+#set proper rights to ensure files will be readable.
+chmod 755 /var/log/lighttpd
+
 if [[ 1 -eq ${WEBLOGS_STDOUT:-0} ]]; then
   #lighthttpd cannot use /dev/stdout https://redmine.lighttpd.net/issues/2731
   for fi in /var/log/lighttpd/access-pihole.log /var/log/lighttpd/error-pihole.log
@@ -27,7 +34,7 @@ else
   [[ ! -f  /var/log/lighttpd/error-pihole.log ]] && install /dev/null /var/log/lighttpd/error-pihole.log
 
   # Ensure that permissions are set so that lighttpd can write to the logs
-  chown -R www-data:www-data /var/log/lighttpd
+  chown -R www-data:www-data /var/log/lighttpd /run/lighttpd/
   chmod 0644 /var/log/lighttpd/access-pihole.log /var/log/lighttpd/error-pihole.log
 fi
 

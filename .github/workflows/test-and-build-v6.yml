@@ -1,5 +1,6 @@
 name: Build and Publish (development-v6)
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 5 * * *"
   push:
@@ -8,7 +9,6 @@ on:
 
 env:
   dockerhub: ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
-  ghcr: ghcr.io/${{ github.repository_owner }}/pihole
 
 jobs:
   build:
@@ -17,11 +17,10 @@ jobs:
       fail-fast: false
       matrix:
         platform: [linux/amd64, linux/386, linux/arm/v6, linux/arm/v7, linux/arm64]
-        alpine_version: [3.19]
+        container: [3.19]
         include:
           - platform: linux/riscv64
-            alpine_version: edge
-          
+            container: edge
     steps:
       - name: Prepare name for digest up/download
         run: |
@@ -40,19 +39,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
             ${{ env.dockerhub }}
-            ${{ env.ghcr }}            
           flavor: |
             latest=false
           tags: |
             development-v6
 
       - name: Login to DockerHub and GitHub Container Registry
-        uses: ./.github/actions/login-repo
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
-          docker_username: ${{ secrets.DOCKERHUB_USER }}
-          docker_password: ${{ secrets.DOCKERHUB_PASS }}
-          ghcr_username: ${{ github.repository_owner }}
-          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -93,6 +90,7 @@ jobs:
   # If we would push immediately above, the individual runners would overwrite each other's images
   # https://docs.docker.com/build/ci/github-actions/multi-platform/#distribute-build-across-multiple-runners
   merge-and-deploy:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     needs:
       - build
@@ -119,19 +117,17 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
             ${{ env.dockerhub }}
-            ${{ env.ghcr }}
           flavor: |
             latest=false
           tags: |
             development-v6
 
       - name: Login to DockerHub and GitHub Container Registry
-        uses: ./.github/actions/login-repo
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
         with:
-          docker_username: ${{ secrets.DOCKERHUB_USER }}
-          docker_password: ${{ secrets.DOCKERHUB_PASS }}
-          ghcr_username: ${{ github.repository_owner }}
-          ghcr_password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Create manifest list and push (DockerHub and GitHub Container Registry)
         working-directory: /tmp/digests
@@ -144,4 +140,3 @@ jobs:
       - name: Inspect images
         run: |
           docker buildx imagetools inspect ${{ env.dockerhub }}:${{ steps.meta.outputs.version }}
-          docker buildx imagetools inspect ${{ env.ghcr }}:${{ steps.meta.outputs.version }}

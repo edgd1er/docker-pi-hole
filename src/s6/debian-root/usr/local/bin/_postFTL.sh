@@ -28,6 +28,6 @@ echo ""
 pihole updatechecker
 pihole -v
 
-DOCKER_TAG=$(cat /pihole.docker.tag)
+DOCKER_TAG=$(cat /pihole.docker.tag 2>/dev/null || echo ${PIHOLE_DOCKER_TAG})
 echo "  Container tag is: ${DOCKER_TAG}"
 echo ""

@@ -1,0 +1,11 @@
+/var/log/pihole/*.log
+{
+        size 100M
+        copytruncate
+        missingok
+        rotate 14
+        compress
+        delaycompress
+        notifempty
+        create 644 www-data pihole
+}
