@@ -7,6 +7,13 @@ GREEN="\e[32m"
 RED="\e[31m"
 NC="\e[0m"
 
+BR=$(git status | grep -oP "(?<=Sur la branche ).*" | grep -c "v6") || true
+if [[ 0 -eq ${BR} ]]; then
+  CPSE=docker-compose.yml
+else
+  CPSE=docker-compose-v6.yml
+fi
+
 #functions
 buildContainer() {
   docker compose down -v
@@ -19,13 +26,13 @@ buildContainer() {
 }
 
 checkDns() {
-	testip=$(grep -A1 ports docker-compose.yml | tail -1 | grep -oPm1 "(?<=- \")([0-9\.]+)")
+	testip=$(grep -A1 ports ${CPSE} | tail -1 | grep -oPm1 "(?<=- \")([0-9\.]+)")
   dig +short www.free.fr @${testip}
   [[ $? -eq 0 ]] && echo -e "DNS Resolution ${GREEN}OK${NC}" || echo "${RED}DNS Resolution KO${NC}"
 }
 
 checkAdmin() {
-  testip=$(grep -A1 ports docker-compose.yml | tail -1 | grep -oPm1 "(?<=- \")([0-9\.]+)")
+  testip=$(grep -A1 ports ${CPSE} | tail -1 | grep -oPm1 "(?<=- \")([0-9\.]+)")
   res=$(curl -fs "http://${testip}:8053/admin/login.php") || true
   [[ 0 -le ${#res} ]] && res=$(curl -fs "http://${testip}:8053/admin/") || true
   [[ 0 -le ${#res} ]] && echo -e "http admin ${GREEN}OK${NC}" || echo -e "${RED}http admin KO ${NC}\n"
@@ -35,7 +42,7 @@ checkAdmin() {
 }
 #Main
 [[ ${1:-''} != "-t" ]] && buildContainer || true
-docker compose logs
+docker compose -f ${CPSE} logs
 checkDns
 checkAdmin
-[[ ${1:-''} != "-t" ]] && docker compose stop || true
+[[ ${1:-''} != "-t" ]] && docker compose -f ${CPSE} stop || true
