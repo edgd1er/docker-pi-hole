@@ -17,7 +17,7 @@ env:
   IMAGE: pihole
   PIHOLE_DOCKER_TAG: latest
   NAME: edgd1er/pihole
-  S6_OVERLAY_VERSION: 3.1.6.2
+  S6_OVERLAY_VERSION: 3.2.0.0
   DEBIAN_VERSION: bookworm-slim
   DOCKER_PUSH: false
   DOCKER_LOAD: true
@@ -103,7 +103,7 @@ jobs:
 
       - name: Build and no push
         if: ${{ env.DOCKER_LOAD }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: src
@@ -122,7 +122,7 @@ jobs:
 
       - name: Build multi platforms and push
         if: ${{ env.DOCKER_PUSH }}
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           builder: ${{ steps.buildx.outputs.name }}
           context: src

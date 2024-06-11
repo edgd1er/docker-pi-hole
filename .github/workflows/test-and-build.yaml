@@ -18,7 +18,7 @@ env:
   BUILD_NOCACHE: false
   DOCKER_PUSH: true
   DEBIAN_VERSION: bullseye-slim
-  S6_OVERLAY_VERSION: 3.1.6.2
+  S6_OVERLAY_VERSION: 3.2.0.0
   IMAGE: pihole
   PIHOLE_DOCKER_TAG: latest
   NAME: edgd1er/pihole
@@ -77,7 +77,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: src/
           platforms: linux/amd64, linux/arm64, linux/386, linux/arm/v7, linux/arm/v6
