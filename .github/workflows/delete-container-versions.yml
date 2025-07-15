@@ -1,0 +1,17 @@
+# .github/workflows/delete-container-versions.yml
+name: delete pihole image n>10
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete_versions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old container versions
+        uses: actions/delete-package-versions@v5
+        with:
+          delete-only-untagged-versions: 'false'
+          min-versions-to-keep: 10
+          package-name: 'edgd1er/pihole'
+          package-type: 'container'
