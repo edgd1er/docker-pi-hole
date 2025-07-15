@@ -4,16 +4,19 @@ on:
     - cron: "0 5 * * *"
   push:
     branches:
+      - master
       - development
   release:
     types: [published]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  components_branch: ${{ github.event_name == 'release' && 'master' || 'development' }}
+  dockerhub: ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
+  components_branch: ${{ startsWith(github.ref, 'refs/heads/master') && 'master' || 'development' }}
+  alpine_version: 3.23
 
 jobs:
   test:
@@ -74,8 +77,8 @@ jobs:
       push: ${{ github.event_name != 'pull_request' }}
       set-meta-labels: true
       meta-images: |
-        pihole/pihole
-        ghcr.io/${{ github.repository_owner }}/pihole
+        edgd1er/pihole
+      # ghcr.io/${{ github.repository_owner }}/pihole
       meta-tags: |
         type=schedule,pattern=nightly
         type=raw,value=nightly,enable=${{ github.event_name == 'push' }}
@@ -89,6 +92,6 @@ jobs:
         - registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
-        - registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    #    - registry: ghcr.io
+    #      username: ${{ github.repository_owner }}
+    #      password: ${{ secrets.GITHUB_TOKEN }}
