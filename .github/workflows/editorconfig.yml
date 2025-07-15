@@ -12,7 +12,7 @@ jobs:
       uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 #v6.0.0
 
     - name: Get editorconfig-checker
-      uses: editorconfig-checker/action-editorconfig-checker@4b6cd6190d435e7e084fb35e36a096e98506f7b9 #v2.1.0
+      uses: editorconfig-checker/action-editorconfig-checker@v2
 
     - name: Run editorconfig-checker
       run: editorconfig-checker

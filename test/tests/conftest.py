@@ -16,6 +16,7 @@ def run_bash(self, command, *args, **kwargs):
     else:
         out = self.run_local("docker exec %s /bin/bash -c %s", self.name, cmd)
     out.command = self.encode(cmd)
+    print(f"stdout: {out.stdout}, stderr: {out.stderr}, // {out}")
     return out
 
 
@@ -48,6 +49,8 @@ def docker(request):
     # add default TZ if not already set
     if not any("TZ=" in arg for arg in cmd):
         cmd.extend(["-e", 'TZ="Europe/London"'])
+        cmd.extend(["-e", "PH_VERBOSE=0"])
+        cmd.extend(["-e", "SKIPGRAVITYONBOOT=1"])
 
     # add the image name
     cmd.append("pihole:CI_container")
