@@ -106,9 +106,7 @@ RUN cd /etc/.pihole && \
     echo -e "alias ll='ls -alh'" >>/root/.bashrc
 
 # Add PADD to the container, too.
-#ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
-#wget https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh -O src/padd.sh
-ADD --chmod=0755 padd.sh /usr/local/bin/padd
+ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
 # ADD macvendor
 ADD --chown=user:pihole --chmod=555 https://ftl.pi-hole.net/macvendor.db /macvendor.db
 COPY --chmod=0640 crontab.txt /crontab.txt
