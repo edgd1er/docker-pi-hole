@@ -12,7 +12,7 @@ services:
       - "443:443"
       - "443:443/udp" # QUIC protocol support: https://www.chromium.org/quic/
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile # config file on host in same directory as docker-compose.yml for easy editing.
+      - ./Caddyfile:/etc/caddy/Caddyfile # config file on host in same directory as compose.yml for easy editing.
       #- $PWD/site:/srv  # Only use if you are serving a website behind caddy
       - caddy_data:/data # Use docker volumes here bc no need to access these files from host
       - caddy_config:/config # Use docker volumes here bc no need to access these files from host
