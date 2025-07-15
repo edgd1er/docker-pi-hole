@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 ARG FTL_SOURCE=remote
 # Pull Stable images
-FROM alpine:3.22 AS base
+ARG alpine_version=3.22
+FROM alpine:${alpine_version} AS base
 
 ARG TARGETPLATFORM
 ARG WEB_BRANCH="development"
@@ -19,8 +20,9 @@ ARG PIHOLE_GID=1000
 
 ENV DNSMASQ_USER=pihole
 ENV FTL_CMD=no-daemon
+ENV TZ=Europe/Paris
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && apk add --no-cache \
     bash \
     bash-completion \
     bind-tools \
@@ -53,13 +55,7 @@ RUN if [ "${PIHOLE_DOCKER_TAG}" = "nightly" ]; then \
     echo "handle SIGHUP nostop SIGPIPE nostop SIGTERM nostop SIG32 nostop SIG33 nostop SIG34 nostop SIG35 nostop SIG36 nostop SIG37 nostop SIG38 nostop SIG39 nostop SIG40 nostop SIG41 nostop" > /root/.gdbinit; \
     fi
 
-ADD https://ftl.pi-hole.net/macvendor.db /macvendor.db
-COPY crontab.txt /crontab.txt
-
-# Add PADD to the container, too.
-ADD --chmod=0755 https://raw.githubusercontent.com/${PADD_FORK}/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
-
-# download a the main repos from github
+# download a the main repos from github 
 # if the branch is master we clone the latest tag as sometimes the master branch contains meta changes that have not been tagged
 # (we need to create a new "master" branch to avoid the "detached HEAD" state for the version check to work correctly)
 
@@ -93,9 +89,29 @@ RUN cd /etc/.pihole && \
     install -Dm644 ./advanced/bash-completion/pihole /etc/bash_completion.d/pihole && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-prestart.sh /opt/pihole/pihole-FTL-prestart.sh && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-poststop.sh /opt/pihole/pihole-FTL-poststop.sh && \
-    addgroup -S pihole -g ${PIHOLE_GID} && adduser -S pihole -G pihole -u ${PIHOLE_UID} && \
-    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag
+    addgroup -S pihole -g ${PIHOLE_GID} && adduser --shell /bin/bash -S pihole -G pihole -u ${PIHOLE_UID} && \
+    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag && \
+    sed -i "s#/root:/bin/ash#/root:/bin/bash#" /etc/passwd && \
+    sed -E -i "s/( unset DOCKER_TAG)/true #\1/" /opt/pihole/updatecheck.sh && \
+    #echo "pihole ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers.d/99_sudo_pihole && \
+    echo "Cmnd_Alias PIHOLE = /usr/local/bin/padd, /bin/bash pihole *, /bin/bash /usr/local/bin/pihole *, /usr/bin/killall --signal 15 start.sh" > /etc/sudoers.d/99_sudo_pihole && \
+    echo -e "\npihole ALL=(ALL) NOPASSWD:PIHOLE" >> /etc/sudoers.d/99_sudo_pihole && \
+    sed -i 's/# "${PIHOLE_COMMAND}" status/"${PIHOLE_COMMAND}" status/' /opt/pihole/gravity.sh && \
+    sed -i 's#/var/log/pihole/pihole.log {#/var/log/pihole/pihole_flush.log\n/var/log/pihole/pihole.log {#' /etc/pihole/logrotate && \
+    sed -i -E '/service pihole-FTL (start|restart|stop)/d' /opt/pihole/piholeLogFlush.sh && \
+    echo -e "alias padd='port=\${FTLCONF_webserver_port%%,*} padd --port \${port:-8080}  --secret \${FTLCONF_webserver_api_password}'" >>/root/.bashrc && \
+    echo -e "alias addvim='apk add --no-cache vim '" >>/root/.bashrc && \
+    echo -e "alias modalias='vi /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias salias='source /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias ll='ls -alh'" >>/root/.bashrc
 
+# Add PADD to the container, too.
+#ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
+#wget https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh -O src/padd.sh
+ADD --chmod=0755 padd.sh /usr/local/bin/padd
+# ADD macvendor
+ADD --chown=user:pihole --chmod=555 https://ftl.pi-hole.net/macvendor.db /macvendor.db
+COPY --chmod=0640 crontab.txt /crontab.txt
 COPY --chmod=0755 bash_functions.sh /usr/bin/bash_functions.sh
 COPY --chmod=0755 start.sh /usr/bin/start.sh
 
