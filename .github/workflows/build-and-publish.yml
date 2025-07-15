@@ -4,15 +4,17 @@ on:
     - cron: "0 5 * * *"
   push:
     branches:
+      - master
       - development
   release:
     types: [published]
+  workflow_dispatch:
 
 
 env:
   dockerhub: ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
-  ghcr: ghcr.io/${{ github.repository_owner }}/pihole
-  components_branch: ${{ github.event_name == 'schedule' && 'development' || 'master' }}
+  components_branch: ${{ startsWith(github.ref, 'refs/heads/master') && 'master' || 'development' }}
+  alpine_version: 3.22
 
 jobs:
   build:
@@ -42,24 +44,23 @@ jobs:
 
       - name: Checkout Repo
         if: github.event_name != 'schedule'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        uses: actions/checkout@v5
 
       - name: Checkout dev branch if scheduled
         if: github.event_name == 'schedule'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        uses: actions/checkout@v5
         with:
           ref: development
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f #v5.8.0
+        uses: docker/metadata-action@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
             ${{ env.dockerhub }}
-            ${{ env.ghcr }}
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/') }}
+            latest=${{ (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/master')) && github.event_name != 'schedule' }}
           tags: |
             type=schedule,pattern=nightly
             type=ref,event=branch,enable=${{ github.event_name != 'schedule' }}
@@ -67,30 +68,23 @@ jobs:
 
       -
         name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
+        uses: docker/login-action@v3
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_PASS }}
-      -
-        name: Login to GitHub Container Registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 #v3.6.0
+        uses: docker/setup-qemu-action@v3
         with:
-          platforms: ${{ matrix.platform}}
+          platforms: ${{ matrix.platform }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 #v3.11.1
+        uses: docker/setup-buildx-action@v3
 
       - name: Build container and push by digest
         id: build
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 #v6.18.0
+        uses: docker/build-push-action@v6
         with:
           context: ./src/
           platforms: ${{ matrix.platform }}
@@ -100,7 +94,9 @@ jobs:
             CORE_BRANCH=${{ env.components_branch }}
             WEB_BRANCH=${{ env.components_branch }}
             PADD_BRANCH=${{ env.components_branch }}
+            alpine_version: ${{ env.alpine_version }}
           labels: ${{ steps.meta.outputs.labels }}
+          #tags:  ${{ steps.meta.outputs.tags }} #no tags, due to push-by-digest
           outputs: |
             type=image,name=${{ env.dockerhub }},push-by-digest=true,name-canonical=true,push=true
 
@@ -111,7 +107,7 @@ jobs:
           touch "/tmp/digests/${digest_docker#sha256:}"
 
       - name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 #v4.6.2
+        uses: actions/upload-artifact@v4
         with:
           name: digests-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
@@ -128,63 +124,51 @@ jobs:
     steps:
       - name: Checkout Repo
         if: github.event_name != 'schedule'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        uses: actions/checkout@v5
 
       - name: Checkout dev branch if scheduled
         if: github.event_name == 'schedule'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        uses: actions/checkout@v5
         with:
           ref: development
 
       - name: Download digests
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 #v5.0.0
+        uses: actions/download-artifact@v5
         with:
           path: /tmp/digests
           pattern: digests-*
           merge-multiple: true
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 #v3.11.1
+        uses: docker/setup-buildx-action@v3
 
       - name: Docker meta
         id: meta
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 #v5.0.0
+        uses: actions/download-artifact@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           images: |
             ${{ env.dockerhub }}
-            ${{ env.ghcr }}
           flavor: |
-            latest=${{ startsWith(github.ref, 'refs/tags/') }}
+            latest=${{ (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/master')) && github.event_name != 'schedule' }}
           tags: |
             type=schedule,pattern=nightly
             type=ref,event=branch,enable=${{ github.event_name != 'schedule' }}
             type=ref,event=tag
 
-      -
-        name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
           registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_PASS }}
-      -
-        name: Login to GitHub Container Registry
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef #v3.6.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: Create manifest list and push (DockerHub and GitHub Container Registry)
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
             $(printf '${{ env.dockerhub }}@sha256:%s ' *)
-          docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.ghcr }}@sha256:%s ' *)
 
       - name: Inspect images
         run: |
           docker buildx imagetools inspect ${{ env.dockerhub }}:${{ steps.meta.outputs.version }}
-          docker buildx imagetools inspect ${{ env.ghcr }}:${{ steps.meta.outputs.version }}
