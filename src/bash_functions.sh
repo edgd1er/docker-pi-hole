@@ -97,6 +97,7 @@ install_logrotate() {
     # pihole-FTL-prestart.sh will set the ownership of the file to root:root
     echo "  [i] Ensuring logrotate script exists in /etc/pihole"
     install -Dm644 -t /etc/pihole /etc/.pihole/advanced/Templates/logrotate
+    chmod 644 /etc/pihole/logrotate
     echo ""
 }
 
