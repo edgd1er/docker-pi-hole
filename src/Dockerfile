@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 ARG FTL_SOURCE=remote
 # Pull Stable images
-FROM alpine:3.22 AS base
+ARG alpine_version=3.22
+FROM alpine:${alpine_version} AS base
 
 ARG TARGETPLATFORM
 ARG WEB_BRANCH="development"
@@ -19,8 +20,9 @@ ARG PIHOLE_GID=1000
 
 ENV DNSMASQ_USER=pihole
 ENV FTL_CMD=no-daemon
+ENV TZ=Europe/Paris
 
-RUN apk add --no-cache \
+RUN apk upgrade --no-cache && apk add --no-cache \
     bash \
     bash-completion \
     bind-tools \
@@ -39,10 +41,12 @@ RUN apk add --no-cache \
     psmisc \
     shadow \
     sudo \
+    tini \
     tzdata \
     unzip \
     wget
 
+FROM base AS ph
 # For nightly images, we install gdb and screen for ease of debugging (this is
 # not included in the default image to keep it small), and also prepare the
 # system for a core dump. Furthermore, we already add the required signal
@@ -52,12 +56,6 @@ RUN if [ "${PIHOLE_DOCKER_TAG}" = "nightly" ]; then \
     echo "ulimit -c unlimited" >> /etc/profile && \
     echo "handle SIGHUP nostop SIGPIPE nostop SIGTERM nostop SIG32 nostop SIG33 nostop SIG34 nostop SIG35 nostop SIG36 nostop SIG37 nostop SIG38 nostop SIG39 nostop SIG40 nostop SIG41 nostop" > /root/.gdbinit; \
     fi
-
-ADD https://ftl.pi-hole.net/macvendor.db /macvendor.db
-COPY crontab.txt /crontab.txt
-
-# Add PADD to the container, too.
-ADD --chmod=0755 https://raw.githubusercontent.com/${PADD_FORK}/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
 
 # download a the main repos from github
 # if the branch is master we clone the latest tag as sometimes the master branch contains meta changes that have not been tagged
@@ -72,6 +70,7 @@ RUN clone_repo() { \
         if [ "$BRANCH" = "master" ]; then \
             CLONE_BRANCH=$(curl -s https://api.github.com/repos/${FORK}/${REPO}/releases/latest | jq -r .tag_name); \
         fi; \
+        echo "cloning $CLONE_BRANCH of https://github.com/${FORK}/${REPO}.git" ; \
         git clone --branch "$CLONE_BRANCH" --single-branch --depth 1 "https://github.com/${FORK}/${REPO}.git" "$DEST"; \
         cd "$DEST"; \
         if [ "$BRANCH" = "master" ]; then git checkout -b master; fi; \
@@ -90,13 +89,37 @@ RUN cd /etc/.pihole && \
     install -Dm755 -d /var/log/pihole && \
     install -Dm755 -d /var/lib/logrotate && \
     install -Dm755 -t /usr/local/bin pihole && \
+    # new bash completion \
+    if [[ -f ./advanced/bash-completion/pihole.bash  ]]; then \
     install -Dm644 ./advanced/bash-completion/pihole.bash /etc/bash_completion.d/pihole && \
-    install -Dm644 ./advanced/bash-completion/pihole-ftl.bash /etc/bash_completion.d/pihole-FTL && \
+    install -Dm644 ./advanced/bash-completion/pihole-ftl.bash /etc/bash_completion.d/pihole-FTL; else \
+    # legacy bash completion \
+    install -Dm644 ./advanced/bash-completion/pihole /etc/bash_completion.d/pihole;fi && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-prestart.sh /opt/pihole/pihole-FTL-prestart.sh && \
     install -T -m 0755 ./advanced/Templates/pihole-FTL-poststop.sh /opt/pihole/pihole-FTL-poststop.sh && \
-    addgroup -S pihole -g ${PIHOLE_GID} && adduser -S pihole -G pihole -u ${PIHOLE_UID} && \
-    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag
+    addgroup -S pihole -g ${PIHOLE_GID} && adduser --shell /bin/bash -S pihole -G pihole -u ${PIHOLE_UID} && \
+    echo "${PIHOLE_DOCKER_TAG}" > /pihole.docker.tag && \
+    sed -i "s#/root:/bin/ash#/root:/bin/bash#" /etc/passwd && \
+    sed -E -i "s/( unset DOCKER_TAG)/true #\1/" /opt/pihole/updatecheck.sh && \
+    echo "Cmnd_Alias PIHOLE = /usr/local/bin/padd, /bin/bash pihole *, /bin/bash /usr/local/bin/pihole *, /usr/bin/killall --signal 15 start.sh" > /etc/sudoers.d/99_sudo_pihole && \
+    echo -e "\npihole ALL=(ALL) NOPASSWD:PIHOLE" >> /etc/sudoers.d/99_sudo_pihole && \
+    sed -i 's/# "${PIHOLE_COMMAND}" status/"${PIHOLE_COMMAND}" status/' /opt/pihole/gravity.sh && \
+    sed -i 's#/var/log/pihole/pihole.log {#/var/log/pihole/pihole_flush.log\n/var/log/pihole/pihole.log {#' /etc/pihole/logrotate && \
+    sed -i -E '/service pihole-FTL (start|restart|stop)/d' /opt/pihole/piholeLogFlush.sh && \
+    echo -e "alias padd='port=\${FTLCONF_webserver_port%%,*} padd --port \${port:-8080}  --secret \${FTLCONF_webserver_api_password}'" >>/root/.bashrc && \
+    echo -e "alias addvim='apk add --no-cache vim '" >>/root/.bashrc && \
+    echo -e "alias modalias='vi /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias salias='source /root/.bashrc'" >>/root/.bashrc && \
+    echo -e "alias ll='ls -alh'" >>/root/.bashrc
+#    && touch /etc/pihole/versions && cat /etc/pihole/versions
 
+# Add PADD to the container, too.
+#ADD --chmod=0755 https://raw.githubusercontent.com/pi-hole/PADD/${PADD_BRANCH}/padd.sh /usr/local/bin/padd
+#wget https://raw.githubusercontent.com/pi-hole/PADD/master/padd.sh -O src/padd.sh
+ADD --chmod=0755 padd.sh /usr/local/bin/padd
+# ADD macvendor
+ADD --chown=user:pihole --chmod=555 https://ftl.pi-hole.net/macvendor.db /macvendor.db
+COPY --chmod=0640 crontab.txt /crontab.txt
 COPY --chmod=0755 bash_functions.sh /usr/bin/bash_functions.sh
 COPY --chmod=0755 start.sh /usr/bin/start.sh
 
@@ -108,7 +131,7 @@ EXPOSE 443
 
 ## Buildkit can do some fancy stuff and we can use it to either download FTL from ftl.pi-hole.net or use a local copy
 
-FROM base AS remote-ftl-install
+FROM ph AS remote-ftl-install
 # Default stage if FTL_SOURCE is not explicitly set to "local"
 # Download the latest version of pihole-FTL for the correct architecture
 RUN if   [ "$TARGETPLATFORM" = "linux/amd64" ];    then FTLARCH=amd64; \
@@ -126,7 +149,7 @@ RUN if   [ "$TARGETPLATFORM" = "linux/amd64" ];    then FTLARCH=amd64; \
     && readelf -h /usr/bin/pihole-FTL || (echo "Error with downloaded FTL binary" && exit 1) \
     && /usr/bin/pihole-FTL  -vv
 
-FROM base AS local-ftl-install
+FROM ph AS local-ftl-install
 # pihole-FTL must be built from source and copied to the src directory first!
 COPY --chmod=0755 pihole-FTL /usr/bin/pihole-FTL
 RUN  readelf -h /usr/bin/pihole-FTL || (echo "Error with local FTL binary" && exit 1)
@@ -136,4 +159,4 @@ FROM ${FTL_SOURCE}-ftl-install AS final
 
 HEALTHCHECK CMD dig -p $(pihole-FTL --config dns.port) +short +norecurse +retry=0 @127.0.0.1 pi.hole || exit 1
 
-ENTRYPOINT ["start.sh"]
+ENTRYPOINT ["tini","--","start.sh"]
