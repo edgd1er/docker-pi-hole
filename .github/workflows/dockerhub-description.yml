@@ -19,5 +19,5 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_PASS }}
-        repository: pihole/pihole
+        repository: edgd1er/pihole
         short-description: ${{ github.event.repository.description }}
