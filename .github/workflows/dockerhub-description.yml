@@ -15,9 +15,9 @@ jobs:
     - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 #v7.0.0
 
     - name: Docker Hub Description
-      uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa #v5
+      uses: peter-evans/dockerhub-description@v5
       with:
         username: ${{ secrets.DOCKERHUB_USER }}
         password: ${{ secrets.DOCKERHUB_PASS }}
-        repository: pihole/pihole
+        repository: edgd1er/pihole
         short-description: ${{ github.event.repository.description }}

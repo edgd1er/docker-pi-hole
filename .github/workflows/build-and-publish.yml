@@ -7,13 +7,15 @@ on:
       - development
   release:
     types: [published]
-  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  components_branch: ${{ github.event_name == 'release' && 'master' || 'development' }}
+  dockerhub: ${{ secrets.DOCKERHUB_NAMESPACE }}/pihole
+  components_branch: ${{ startsWith(github.ref, 'refs/heads/master') && 'master' || 'development' }}
+  alpine_version: 3.24
 
 jobs:
   test:
@@ -24,11 +26,11 @@ jobs:
       matrix:
         platform:
           - linux/amd64
-          - linux/386
-          - linux/arm/v6
+          #- linux/386
+          #- linux/arm/v6
           - linux/arm/v7
           - linux/arm64
-          - linux/riscv64
+          #- linux/riscv64
     env:
       CI_ARCH: ${{ matrix.platform }}
     steps:
@@ -50,7 +52,7 @@ jobs:
       - run: echo "Exposing env vars for reusable workflow"
 
   build:
-    uses: docker/github-builder/.github/workflows/build.yml@3415a188caae9a0da7fba83bc06985776e0b1790 #v1.14.0
+    uses: docker/github-builder/.github/workflows/build.yml@v1
     needs:
       - build-prepare
     permissions:
@@ -75,14 +77,16 @@ jobs:
       push: ${{ github.event_name != 'pull_request' }}
       set-meta-labels: true
       meta-images: |
-        pihole/pihole
-        ghcr.io/${{ github.repository_owner }}/pihole
+        edgd1er/pihole
+      # ghcr.io/${{ github.repository_owner }}/pihole
       meta-tags: |
-        type=schedule,pattern=nightly
-        type=raw,value=nightly,enable=${{ github.event_name == 'push' }}
+        #type=raw,value=nightly,enable=${{ github.event_name == 'push' }}
+        type=raw,value=master,enable=${{ startsWith(github.ref, 'refs/heads/master') }}
+        type=raw,value=develop,enable=${{ startsWith(github.ref, 'refs/heads/development') }}
         type=ref,event=tag
       meta-flavor: |
-        latest=${{ startsWith(github.ref, 'refs/tags/') }}
+        latest=${{ startsWith(github.ref, 'refs/heads/master') }}
+        #latest=${{ startsWith(github.ref, 'refs/tags/') }}
       # FIXME: GHCR does not support the referrers API and spams the registry with sha-tagged images when cosigned: https://github.com/docker/github-builder/issues/109
       sign: false
     secrets:
@@ -90,6 +94,6 @@ jobs:
         - registry: docker.io
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_PASS }}
-        - registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    #    - registry: ghcr.io
+    #      username: ${{ github.repository_owner }}
+    #      password: ${{ secrets.GITHUB_TOKEN }}
