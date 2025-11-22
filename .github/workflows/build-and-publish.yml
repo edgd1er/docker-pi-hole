@@ -45,12 +45,12 @@ jobs:
       - &checkout-repo
         name: Checkout Repo
         if: github.event_name != 'schedule'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - &checkout-dev
         name: Checkout dev branch if scheduled
         if: github.event_name == 'schedule'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: development
 
