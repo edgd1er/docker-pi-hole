@@ -61,7 +61,7 @@ jobs:
           tags: |
             development
       - name: Checkout Repo dev-v6
-        uses: actions/checkout@v6 #v6.0.0
+        uses: actions/checkout@v6.0.1 #v6.0.0
         with:
           ref: development
 
